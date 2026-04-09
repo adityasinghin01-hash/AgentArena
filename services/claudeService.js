@@ -69,7 +69,9 @@ const PROVIDERS = {
  * Handles ```json ... ```, ``` ... ```, and stray backtick lines.
  */
 const stripCodeBlocks = (text) => {
-    if (!text || typeof text !== 'string') return text;
+    if (!text || typeof text !== 'string') {
+        return text;
+    }
     // Remove ```json ... ``` or ``` ... ``` wrappers
     return text
         .replace(/^```(?:json)?\s*\n?/i, '')
@@ -157,7 +159,9 @@ const callAI = async (systemPrompt, userMessage, maxTokens = 2048) => {
         return text;
     } catch (err) {
         // Re-throw AppErrors as-is (already logged above)
-        if (err instanceof AppError) throw err;
+        if (err instanceof AppError) {
+            throw err;
+        }
 
         // Unexpected errors — log and wrap
         logger.error('AI call failed unexpectedly', {
