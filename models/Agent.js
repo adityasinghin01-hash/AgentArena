@@ -98,6 +98,18 @@ const agentSchema = new mongoose.Schema(
             default: 0,
         },
 
+        // Atomic counters — used by auditionService for $inc operations.
+        // Derived fields (reliabilityScore, winRate) are computed from these.
+        cumulativeScore: {
+            type: Number,
+            default: 0,
+        },
+
+        wins: {
+            type: Number,
+            default: 0,
+        },
+
         badgeTier: {
             type: String,
             enum: {

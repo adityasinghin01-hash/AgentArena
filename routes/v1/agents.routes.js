@@ -4,7 +4,8 @@
 
 const express = require('express');
 const router = express.Router();
-const { body, param, validationResult } = require('express-validator');
+const { body, param } = require('express-validator');
+const validateRequest = require('../../middleware/validateRequest');
 const rateLimit = require('express-rate-limit');
 const { protect: authMiddleware } = require('../../middleware/authMiddleware');
 const { CATEGORIES, PRICING_TIERS } = require('../../models/Agent');
@@ -94,24 +95,12 @@ const categoryParamValidation = [
         .isIn(CATEGORIES).withMessage(`Category must be one of: ${CATEGORIES.join(', ')}`),
 ];
 
-// ── Shared validation-result handler ─────────────────────────
-// Catches express-validator errors and returns 400 before reaching the controller.
-const handleValidationErrors = (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({
-            success: false,
-            message: errors.array()[0].msg,
-            errors: errors.array(),
-        });
-    }
-    next();
-};
+
 
 // ── Public routes ────────────────────────────────────────────
 // IMPORTANT: /category/:category MUST come BEFORE /:id to avoid
 // Express treating "category" as an :id parameter.
-router.get('/category/:category', agentReadLimiter, categoryParamValidation, handleValidationErrors, getAgentsByCategory);
+router.get('/category/:category', agentReadLimiter, categoryParamValidation, validateRequest, getAgentsByCategory);
 router.get('/:id', agentReadLimiter, getAgent);
 router.get('/', agentReadLimiter, listAgents);
 
