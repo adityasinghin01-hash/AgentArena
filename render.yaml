@@ -1,0 +1,14 @@
+# render.yaml
+# Infrastructure-as-Code for Render deployment.
+# Per ARCHITECTURE_MAP and TECH_DECISIONS §4.
+
+services:
+  - type: web
+    name: auth-backend
+    env: node
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
