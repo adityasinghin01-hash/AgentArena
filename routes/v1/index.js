@@ -21,6 +21,7 @@ const webhookRoutes = require('./webhooks.routes');
 const agentRoutes = require('./agents.routes');
 const outcomeRoutes = require('./outcome.routes');
 const pipelineRoutes = require('./pipeline.routes');
+const auditionRoutes = require('./audition.routes');
 
 // ── Auth ─────────────────────────────────────────────────
 router.use('/', authRoutes);
@@ -66,5 +67,8 @@ router.use('/outcome', outcomeRoutes);
 
 // ── AgentArena: Pipelines ────────────────────────────────
 router.use('/pipeline', pipelineRoutes);
+
+// ── AgentArena: Auditions ────────────────────────────────
+router.use('/audition', auditionRoutes);
 
 module.exports = router;
