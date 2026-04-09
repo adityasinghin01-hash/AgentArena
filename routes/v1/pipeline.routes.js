@@ -2,8 +2,9 @@
 // Pipeline CRUD routes — create from slots, fetch by ID, list user's pipelines.
 
 const express = require('express');
-const { body, param, validationResult } = require('express-validator');
+const { body, param } = require('express-validator');
 const { protect } = require('../../middleware/authMiddleware');
+const validateRequest = require('../../middleware/validateRequest');
 const {
     createPipeline,
     getPipeline,
@@ -11,21 +12,6 @@ const {
 } = require('../../controllers/pipelineController');
 
 const router = express.Router();
-
-// ── Shared validation handler ────────────────────────────────
-const handleValidationErrors = (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({
-            success: false,
-            errors: errors.array().map((e) => ({
-                field: e.path,
-                message: e.msg,
-            })),
-        });
-    }
-    return next();
-};
 
 // ── Validators ───────────────────────────────────────────────
 const createPipelineValidation = [
@@ -79,7 +65,7 @@ router.post(
     '/create',
     protect(),
     createPipelineValidation,
-    handleValidationErrors,
+    validateRequest,
     createPipeline
 );
 
@@ -95,7 +81,7 @@ router.get(
     '/:id',
     protect(),
     pipelineIdValidation,
-    handleValidationErrors,
+    validateRequest,
     getPipeline
 );
 

@@ -97,43 +97,51 @@ const scoreAgent = async (result, slot) => {
     }
 };
 
-// ── Update agent reliability after audition ──────────────────
+// ── Update agent reliability after audition (ATOMIC) ─────────
+// Uses $inc for counters to prevent lost updates under concurrency.
+// Derived fields (reliabilityScore, winRate, badgeTier) are computed
+// from the post-increment values.
 const updateAgentReliability = async (agentId, newScore, isWinner) => {
     try {
-        const agent = await Agent.findById(agentId);
-        if (!agent) {
+        // Step 1: Atomic increment of counters
+        const incFields = {
+            totalAuditions: 1,
+            cumulativeScore: newScore,
+        };
+        if (isWinner) {
+            incFields.wins = 1;
+        }
+
+        const updated = await Agent.findByIdAndUpdate(
+            agentId,
+            { $inc: incFields },
+            { new: true }
+        );
+
+        if (!updated) {
             return;
         }
 
-        const newTotal = agent.totalAuditions + 1;
-
-        // Rolling average: ((old * count) + new) / (count + 1)
-        const newReliability = Math.round(
-            ((agent.reliabilityScore * agent.totalAuditions) + newScore) / newTotal
+        // Step 2: Compute derived fields from atomic counters
+        const reliabilityScore = Math.round(
+            updated.cumulativeScore / updated.totalAuditions
         );
+        const winRate = Math.round(
+            (updated.wins / updated.totalAuditions) * 100
+        );
+        const badgeTier = calculateBadgeTier(updated.totalAuditions, reliabilityScore);
 
-        // Win rate: track wins via current winRate
-        const currentWins = Math.round((agent.winRate / 100) * agent.totalAuditions);
-        const newWins = isWinner ? currentWins + 1 : currentWins;
-        const newWinRate = Math.round((newWins / newTotal) * 100);
-
-        const newBadge = calculateBadgeTier(newTotal, newReliability);
-
+        // Step 3: Persist derived fields
         await Agent.findByIdAndUpdate(agentId, {
-            $set: {
-                totalAuditions: newTotal,
-                reliabilityScore: newReliability,
-                winRate: newWinRate,
-                badgeTier: newBadge,
-            },
+            $set: { reliabilityScore, winRate, badgeTier },
         });
 
         logger.info('Agent reliability updated', {
             agentId,
-            totalAuditions: newTotal,
-            reliabilityScore: newReliability,
-            winRate: newWinRate,
-            badgeTier: newBadge,
+            totalAuditions: updated.totalAuditions,
+            reliabilityScore,
+            winRate,
+            badgeTier,
         });
     } catch (err) {
         logger.error('Failed to update agent reliability', {
@@ -168,20 +176,37 @@ const runAudition = async (pipeline, userInput, sseCallback) => {
             runSingleAgent(agent, slot, userInput)
         );
 
-        // Promise.allSettled — one failing agent doesn't kill the rest
+        // Promise.allSettled — one failing agent doesn't kill the rest.
+        // Note: runSingleAgent never throws (catches internally),
+        // so rejections here indicate unexpected infrastructure failures.
         const settled = await Promise.allSettled(agentPromises);
-        const agentResults = settled.map((s) =>
-            s.status === 'fulfilled'
-                ? s.value
-                : {
+        const agentResults = [];
+
+        for (let i = 0; i < settled.length; i++) {
+            const s = settled[i];
+            if (s.status === 'fulfilled') {
+                agentResults.push(s.value);
+            } else {
+                // Unexpected rejection — log with full context and skip
+                // this entry (don't persist null agentId to DB).
+                const agent = slot.assignedAgents[i];
+                logger.warn('Unexpected agent rejection in Promise.allSettled', {
                     slotName: slot.name,
-                    agentId: null,
-                    agentName: 'Unknown',
+                    agentId: agent?._id,
+                    agentName: agent?.name,
+                    reason: s.reason?.message || String(s.reason),
+                });
+                // Still stream the failure event so frontend knows
+                sseCallback({
+                    event: 'agent_output',
+                    slot: slot.name,
+                    agentId: agent?._id || 'unknown',
+                    agentName: agent?.name || 'Unknown',
                     output: 'Agent failed to respond',
                     responseTimeMs: 0,
-                    failed: true,
-                }
-        );
+                });
+            }
+        }
 
         // ── 2. Stream agent outputs ──────────────────────────
         for (const result of agentResults) {
@@ -212,11 +237,20 @@ const runAudition = async (pipeline, userInput, sseCallback) => {
         }
 
         // ── 4. Pick winner (highest scores.total) ────────────
+        // Tie-breaking: lower responseTimeMs wins, then alphabetical agentName.
         let winner = null;
         let highestTotal = -1;
 
         for (const result of scoredResults) {
-            if (result.scores.total > highestTotal) {
+            const isBetter =
+                result.scores.total > highestTotal ||
+                (result.scores.total === highestTotal && winner && (
+                    result.responseTimeMs < winner.responseTimeMs ||
+                    (result.responseTimeMs === winner.responseTimeMs &&
+                        result.agentName < winner.agentName)
+                ));
+
+            if (isBetter) {
                 highestTotal = result.scores.total;
                 winner = result;
             }
@@ -232,7 +266,7 @@ const runAudition = async (pipeline, userInput, sseCallback) => {
             });
         }
 
-        // Collect results for DB save
+        // Collect results for DB save (only entries with valid agentId)
         allResults.push(
             ...scoredResults.map((r) => ({
                 slotName: r.slotName,

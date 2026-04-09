@@ -2,8 +2,9 @@
 // Audition routes — run pipeline auditions with SSE, fetch results.
 
 const express = require('express');
-const { body, param, validationResult } = require('express-validator');
+const { body, param } = require('express-validator');
 const { protect } = require('../../middleware/authMiddleware');
+const validateRequest = require('../../middleware/validateRequest');
 const {
     run,
     getAudition,
@@ -11,21 +12,6 @@ const {
 } = require('../../controllers/auditionController');
 
 const router = express.Router();
-
-// ── Shared validation handler ────────────────────────────────
-const handleValidationErrors = (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-        return res.status(400).json({
-            success: false,
-            errors: errors.array().map((e) => ({
-                field: e.path,
-                message: e.msg,
-            })),
-        });
-    }
-    return next();
-};
 
 // ── Validators ───────────────────────────────────────────────
 const runAuditionValidation = [
@@ -59,7 +45,7 @@ router.post(
     '/run/:pipelineId',
     protect(),
     runAuditionValidation,
-    handleValidationErrors,
+    validateRequest,
     run
 );
 
@@ -68,7 +54,7 @@ router.get(
     '/pipeline/:pipelineId',
     protect(),
     pipelineIdValidation,
-    handleValidationErrors,
+    validateRequest,
     getAuditionsByPipeline
 );
 
@@ -77,7 +63,7 @@ router.get(
     '/:id',
     protect(),
     auditionIdValidation,
-    handleValidationErrors,
+    validateRequest,
     getAudition
 );
 

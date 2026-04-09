@@ -137,11 +137,17 @@ const getAudition = async (req, res, next) => {
 
 /**
  * GET /api/v1/audition/pipeline/:pipelineId
- * Returns all auditions for a pipeline (owner-only).
+ * Returns paginated auditions for a pipeline (owner-only).
+ * Query params: page (default 1), limit (default 20, max 100)
  */
 const getAuditionsByPipeline = async (req, res, next) => {
     try {
         const { pipelineId } = req.params;
+
+        // Pagination
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(100, Math.max(1, parseInt(req.query.limit, 10) || 20));
+        const skip = (page - 1) * limit;
 
         // Verify pipeline ownership
         const pipeline = await Pipeline.findById(pipelineId).select('userId');
@@ -152,13 +158,22 @@ const getAuditionsByPipeline = async (req, res, next) => {
             throw new AppError('Not authorized to view these auditions', 403);
         }
 
-        const auditions = await Audition.find({ pipelineId })
-            .sort({ createdAt: -1 })
-            .populate('results.agentId', 'name category');
+        const [auditions, total] = await Promise.all([
+            Audition.find({ pipelineId })
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .populate('results.agentId', 'name category'),
+            Audition.countDocuments({ pipelineId }),
+        ]);
 
         return res.status(200).json({
             success: true,
             count: auditions.length,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit),
             data: auditions,
         });
     } catch (err) {
