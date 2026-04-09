@@ -1,7 +1,7 @@
 // scripts/seed-agents.js
 // Seeds 10 demo agents into MongoDB for AgentArena prototype.
 // Usage: node scripts/seed-agents.js
-// Safe to re-run — uses upsert by name (idempotent).
+// Safe to re-run — uses upsert by { seedKey, deployedBy } (idempotent).
 
 require('dotenv').config();
 const mongoose = require('mongoose');
@@ -220,6 +220,14 @@ const seedAgents = async () => {
 
         for (const agentData of agents) {
             const { seedKey, ...fields } = agentData;
+
+            // Fail-fast: every seed agent must have a seedKey
+            if (!seedKey) {
+                throw new Error(
+                    `Seed agent "${fields.name || 'unknown'}" is missing a seedKey. ` +
+                    'Every entry in the agents array must have a unique seedKey.'
+                );
+            }
 
             const result = await Agent.findOneAndUpdate(
                 { seedKey, deployedBy: SEED_USER_ID },

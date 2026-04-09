@@ -30,7 +30,7 @@ const agentSchema = new mongoose.Schema(
         // prevents overwriting user-created agents that share a name.
         seedKey: {
             type: String,
-            sparse: true,
+            immutable: true,
         },
 
         name: {
@@ -132,6 +132,12 @@ agentSchema.index({ isActive: 1, reliabilityScore: -1, createdAt: -1 });
 agentSchema.index({ category: 1, isActive: 1, reliabilityScore: -1, createdAt: -1 });
 agentSchema.index({ deployedBy: 1 });
 agentSchema.index({ badgeTier: 1 });
+// Unique constraint on seed identity — prevents duplicate seeds under concurrent runs.
+// partialFilterExpression ensures the index only applies to documents that have a seedKey.
+agentSchema.index(
+    { seedKey: 1, deployedBy: 1 },
+    { unique: true, partialFilterExpression: { seedKey: { $exists: true } } }
+);
 
 const Agent = mongoose.model('Agent', agentSchema);
 
