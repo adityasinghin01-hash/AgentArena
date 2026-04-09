@@ -1,5 +1,5 @@
 // models/Pipeline.js
-// Pipeline schema for AgentArena.
+// Pipeline schema for AgentArena — represents a user's decomposed outcome.
 // A pipeline is a user's decomposed outcome — a plan of AI agent slots
 // that will compete in auditions to find the best agent per task.
 
