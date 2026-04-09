@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "test": "jest",
     "test:ai": "node scripts/test-claude-service.js"
+    "seed:agents": "node scripts/seed-agents.js"
   },
   "keywords": [],
   "author": "",

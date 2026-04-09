@@ -18,6 +18,7 @@ const adminRoutes = require('./admin.routes');
 const subscriptionRoutes = require('./subscription.routes');
 const apiKeyRoutes = require('./apikeys.routes');
 const webhookRoutes = require('./webhooks.routes');
+const agentRoutes = require('./agents.routes');
 
 // ── Auth ─────────────────────────────────────────────────
 router.use('/', authRoutes);
@@ -54,6 +55,9 @@ router.use('/apikeys', apiKeyRoutes);
 
 // ── Webhooks ─────────────────────────────────────────────
 router.use('/webhooks', webhookRoutes);
+
+// ── Agents (AgentArena) ─────────────────────────────────
+router.use('/agents', agentRoutes);
 
 module.exports = router;
 
