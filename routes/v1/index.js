@@ -19,6 +19,8 @@ const subscriptionRoutes = require('./subscription.routes');
 const apiKeyRoutes = require('./apikeys.routes');
 const webhookRoutes = require('./webhooks.routes');
 const agentRoutes = require('./agents.routes');
+const outcomeRoutes = require('./outcome.routes');
+const pipelineRoutes = require('./pipeline.routes');
 
 // ── Auth ─────────────────────────────────────────────────
 router.use('/', authRoutes);
@@ -56,8 +58,13 @@ router.use('/apikeys', apiKeyRoutes);
 // ── Webhooks ─────────────────────────────────────────────
 router.use('/webhooks', webhookRoutes);
 
-// ── Agents (AgentArena) ─────────────────────────────────
+// ── AgentArena: Agents ───────────────────────────────────
 router.use('/agents', agentRoutes);
 
-module.exports = router;
+// ── AgentArena: Outcome Engine ───────────────────────────
+router.use('/outcome', outcomeRoutes);
 
+// ── AgentArena: Pipelines ────────────────────────────────
+router.use('/pipeline', pipelineRoutes);
+
+module.exports = router;
