@@ -1,21 +1,12 @@
 // services/claudeService.js
 // Central AI service for AgentArena — ALL AI API calls go through here.
-// Supports multiple providers via AI_PROVIDER env switch.
+// Supports multiple providers via AI_PROVIDER config switch.
 // Currently: "groq" (free, for local dev) and "claude" (production).
 // Never call any AI API directly from a controller — always use this service.
 
+const config = require('../config/config');
 const logger = require('../config/logger');
-
-// ── AppError helper ──────────────────────────────────────────
-// Lightweight error class with statusCode for the global errorHandler.
-// Follows the codebase pattern: errorHandler reads err.statusCode.
-class AppError extends Error {
-    constructor(message, statusCode = 500) {
-        super(message);
-        this.statusCode = statusCode;
-        this.name = 'AppError';
-    }
-}
+const AppError = require('../utils/AppError');
 
 // ── Provider configurations ─────────────────────────────────
 // Each provider defines its URL, auth headers, request body shape,
@@ -24,7 +15,7 @@ class AppError extends Error {
 const PROVIDERS = {
     groq: {
         url: 'https://api.groq.com/openai/v1/chat/completions',
-        getApiKey: () => process.env.GROQ_API_KEY,
+        getApiKey: () => config.GROQ_API_KEY,
         model: 'llama-3.3-70b-versatile',
         headers: (key) => ({
             'Content-Type': 'application/json',
@@ -39,11 +30,12 @@ const PROVIDERS = {
             max_tokens: maxTokens,
             temperature: 0.7,
         }),
-        extractText: (data) => data.choices[0].message.content,
+        extractText: (data) =>
+            data?.choices?.[0]?.message?.content || null,
     },
     claude: {
         url: 'https://api.anthropic.com/v1/messages',
-        getApiKey: () => process.env.CLAUDE_API_KEY,
+        getApiKey: () => config.CLAUDE_API_KEY,
         model: 'claude-opus-4-5',
         headers: (key) => ({
             'Content-Type': 'application/json',
@@ -58,7 +50,8 @@ const PROVIDERS = {
                 { role: 'user', content: userMessage },
             ],
         }),
-        extractText: (data) => data.content[0].text,
+        extractText: (data) =>
+            data?.content?.[0]?.text || null,
     },
 };
 
@@ -101,8 +94,8 @@ const safeParseJSON = (text, context) => {
 
 /**
  * callAI — base function for all AI calls.
- * Reads AI_PROVIDER from env, picks the right provider config,
- * makes the API call, and returns the extracted text.
+ * Reads AI_PROVIDER from config, picks the right provider config,
+ * makes the API call with timeout, and returns the extracted text.
  *
  * @param {string} systemPrompt - System-level instructions for the AI
  * @param {string} userMessage  - The user's input/query
@@ -110,7 +103,7 @@ const safeParseJSON = (text, context) => {
  * @returns {string} The AI's response text
  */
 const callAI = async (systemPrompt, userMessage, maxTokens = 2048) => {
-    const providerName = process.env.AI_PROVIDER || 'groq';
+    const providerName = config.AI_PROVIDER;
     const provider = PROVIDERS[providerName];
 
     if (!provider) {
@@ -128,12 +121,19 @@ const callAI = async (systemPrompt, userMessage, maxTokens = 2048) => {
         );
     }
 
+    // Abort controller for request timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), config.AI_TIMEOUT_MS);
+
     try {
         const response = await fetch(provider.url, {
             method: 'POST',
             headers: provider.headers(apiKey),
             body: JSON.stringify(provider.buildBody(systemPrompt, userMessage, maxTokens)),
+            signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
 
         if (!response.ok) {
             const errorBody = await response.text();
@@ -158,6 +158,17 @@ const callAI = async (systemPrompt, userMessage, maxTokens = 2048) => {
 
         return text;
     } catch (err) {
+        clearTimeout(timeoutId);
+
+        // Timeout — AbortController fired
+        if (err.name === 'AbortError') {
+            logger.error('AI request timed out', {
+                provider: providerName,
+                timeoutMs: config.AI_TIMEOUT_MS,
+            });
+            throw new AppError(`AI service timeout (${providerName})`, 504);
+        }
+
         // Re-throw AppErrors as-is (already logged above)
         if (err instanceof AppError) {
             throw err;
@@ -231,11 +242,18 @@ Be strict and consistent.`;
     const text = await callAI(systemPrompt, userMessage, 512);
     const parsed = safeParseJSON(text, 'evaluateOutput');
 
-    // Validate all 5 score fields exist and are numbers
+    // Validate all 5 score fields exist, are numbers, and within 0-100
     const requiredFields = ['accuracy', 'completeness', 'format', 'hallucination', 'total'];
     for (const field of requiredFields) {
         if (typeof parsed[field] !== 'number') {
             logger.error('evaluateOutput: missing or invalid score field', {
+                field,
+                value: parsed[field],
+            });
+            throw new AppError('AI returned invalid JSON', 502);
+        }
+        if (parsed[field] < 0 || parsed[field] > 100) {
+            logger.error('evaluateOutput: score out of range (0-100)', {
                 field,
                 value: parsed[field],
             });
@@ -270,6 +288,4 @@ module.exports = {
     decomposeOutcome,
     evaluateOutput,
     runAgent,
-    // Exported for testing only
-    AppError,
 };
