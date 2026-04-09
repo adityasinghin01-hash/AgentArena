@@ -26,6 +26,13 @@ const BADGE_TIERS = ['unverified', 'tested', 'verified', 'elite'];
 // ── Schema ───────────────────────────────────────────────────
 const agentSchema = new mongoose.Schema(
     {
+        // Immutable key used by the seed script for safe upsert —
+        // prevents overwriting user-created agents that share a name.
+        seedKey: {
+            type: String,
+            sparse: true,
+        },
+
         name: {
             type: String,
             required: [true, 'Agent name is required'],
@@ -118,13 +125,17 @@ const agentSchema = new mongoose.Schema(
 );
 
 // ── Indexes ──────────────────────────────────────────────────
-agentSchema.index({ category: 1 });
+// Compound indexes matching actual query patterns in agentController:
+// listAgents:        { isActive: true } sorted by { reliabilityScore: -1, createdAt: -1 }
+// getAgentsByCategory: { category, isActive: true } sorted by { reliabilityScore: -1, createdAt: -1 }
+agentSchema.index({ isActive: 1, reliabilityScore: -1, createdAt: -1 });
+agentSchema.index({ category: 1, isActive: 1, reliabilityScore: -1, createdAt: -1 });
 agentSchema.index({ deployedBy: 1 });
-agentSchema.index({ reliabilityScore: -1 });
 agentSchema.index({ badgeTier: 1 });
 
 const Agent = mongoose.model('Agent', agentSchema);
 
 module.exports = Agent;
 module.exports.CATEGORIES = CATEGORIES;
+module.exports.PRICING_TIERS = PRICING_TIERS;
 module.exports.BADGE_TIERS = BADGE_TIERS;

@@ -72,7 +72,7 @@ const listAgents = async (req, res, next) => {
                 .skip(skip)
                 .limit(limit)
                 .select('-systemPrompt')
-                .populate('deployedBy', 'name email'),
+                .populate('deployedBy', 'name'),
             Agent.countDocuments(filter),
         ]);
 
@@ -103,7 +103,7 @@ const getAgent = async (req, res, next) => {
         const agent = await Agent.findOne({
             _id: req.params.id,
             isActive: true,
-        }).populate('deployedBy', 'name email');
+        }).populate('deployedBy', 'name');
 
         if (!agent) {
             return res.status(404).json({
@@ -148,7 +148,7 @@ const getAgentsByCategory = async (req, res, next) => {
                 .skip(skip)
                 .limit(limit)
                 .select('-systemPrompt')
-                .populate('deployedBy', 'name email'),
+                .populate('deployedBy', 'name'),
             Agent.countDocuments(filter),
         ]);
 

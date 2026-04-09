@@ -35,6 +35,7 @@ const SEED_USER_ID = new mongoose.Types.ObjectId(process.env.SEED_USER_ID);
 const agents = [
     // ── Demo 1: Support Ticket Pipeline ──────────────────────
     {
+        seedKey: 'seed-ticket-classifier',
         name: 'Ticket Classifier',
         description: 'Classifies customer support tickets by topic, urgency, and sentiment to route them to the right team.',
         category: 'classifier',
@@ -49,6 +50,7 @@ Return your analysis as a structured JSON object with fields: topic, urgency, se
         pricing: 'free',
     },
     {
+        seedKey: 'seed-support-summarizer',
         name: 'Support Summarizer',
         description: 'Generates concise, actionable summaries of customer support tickets for agents and managers.',
         category: 'writer',
@@ -63,6 +65,7 @@ Keep summaries professional, factual, and free of speculation. Prioritize action
         pricing: 'free',
     },
     {
+        seedKey: 'seed-priority-ranker',
         name: 'Priority Ranker',
         description: 'Ranks a batch of support tickets by business impact and urgency to optimize team response order.',
         category: 'ranker',
@@ -82,6 +85,7 @@ Return a ranked list with: rank, ticket_id, score, and a one-line justification 
 
     // ── Demo 2: Tweet Pipeline ───────────────────────────────
     {
+        seedKey: 'seed-tech-researcher',
         name: 'Tech Researcher',
         description: 'Researches trending tech topics and competitive landscape to inform content strategy.',
         category: 'researcher',
@@ -97,6 +101,7 @@ Focus on topics that drive engagement: hot takes, contrarian views, data-backed 
         pricing: 'free',
     },
     {
+        seedKey: 'seed-tweet-writer',
         name: 'Tweet Writer',
         description: 'Writes engaging, platform-optimized tweets for tech startups with hooks, CTAs, and hashtag strategy.',
         category: 'writer',
@@ -112,6 +117,7 @@ Write in a confident, conversational tone — not corporate. Use short sentences
         pricing: 'free',
     },
     {
+        seedKey: 'seed-post-scheduler',
         name: 'Post Scheduler',
         description: 'Creates an optimized weekly posting schedule with time slots, content types, and engagement predictions.',
         category: 'scheduler',
@@ -131,6 +137,7 @@ Return a clean, structured schedule in JSON format with fields: day, time, conte
 
     // ── Demo 3: Code Review Pipeline ─────────────────────────
     {
+        seedKey: 'seed-code-linter',
         name: 'Code Linter',
         description: 'Performs deep static analysis on code to catch style violations, anti-patterns, and maintainability issues.',
         category: 'linter',
@@ -146,6 +153,7 @@ Be thorough but not pedantic — focus on issues that actually impact code quali
         pricing: 'free',
     },
     {
+        seedKey: 'seed-security-scanner',
         name: 'Security Scanner',
         description: 'Scans code for security vulnerabilities including injection, auth flaws, and data exposure risks.',
         category: 'scanner',
@@ -162,6 +170,7 @@ Never suggest "just validate input" — provide specific validation patterns. Be
         pricing: 'free',
     },
     {
+        seedKey: 'seed-issue-explainer',
         name: 'Issue Explainer',
         description: 'Takes code issues and security findings and explains them in plain language with actionable fix steps.',
         category: 'explainer',
@@ -180,6 +189,7 @@ Be encouraging, not condescending. Frame issues as "opportunities to improve" no
 
     // ── Bonus: General Analyzer ──────────────────────────────
     {
+        seedKey: 'seed-general-analyzer',
         name: 'General Analyzer',
         description: 'Multi-purpose analysis agent that can break down any text, data, or document into structured insights.',
         category: 'analyzer',
@@ -209,11 +219,14 @@ const seedAgents = async () => {
         let skipped = 0;
 
         for (const agentData of agents) {
+            const { seedKey, ...fields } = agentData;
+
             const result = await Agent.findOneAndUpdate(
-                { name: agentData.name },
+                { seedKey, deployedBy: SEED_USER_ID },
                 {
                     $set: {
-                        ...agentData,
+                        ...fields,
+                        seedKey,
                         deployedBy: SEED_USER_ID,
                         isActive: true,
                     },
