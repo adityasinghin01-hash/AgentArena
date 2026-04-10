@@ -5,6 +5,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const os = require('os');
+const logger = require('../config/logger');
 const router = express.Router();
 
 // ── Version — single authoritative source ────────────────────
@@ -98,7 +99,9 @@ router.get('/health/deep', async (req, res) => {
         cachedAiStatus = 'ok';
     } catch (_err) {
         checks.ai = 'error';
+        checks.aiError = _err.message || String(_err);
         cachedAiStatus = 'error';
+        logger.error('Health check: AI status check failed', { error: checks.aiError });
         // AI failure is non-critical — server is still healthy
     }
 
@@ -135,17 +138,17 @@ router.get('/health/deep', async (req, res) => {
         isHealthy = false;
     }
 
-    // DEBUG: trace 503 cause in CI — remove after diagnosis
+    // TODO: Remove this debug block after CI 503 diagnosis is resolved — tracked in issue #health-debug
     if (!isHealthy) {
-        console.log('[HEALTH-DEBUG]', JSON.stringify({
+        logger.debug('[HEALTH-DEBUG]', {
             isHealthy,
             readyState: mongoose.connection.readyState,
-            dbCheck: checks.database,
-            dbError: checks.databaseError,
-            pingError: checks.databasePingError,
+            databaseCheck: checks.database,
+            databaseError: checks.databaseError,
+            databasePingError: checks.databasePingError,
             isReady: req.app.locals.isReady,
-            rssBytes: process.memoryUsage().rss,
-        }));
+            memoryRss: process.memoryUsage().rss
+        });
     }
 
     return res.status(isHealthy ? 200 : 503).json({
