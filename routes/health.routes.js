@@ -80,7 +80,7 @@ router.get('/health/deep', async (req, res) => {
         isHealthy = false;
     }
 
-    // ── AI Provider ──────────────────────────────────────
+    // ── AI Provider (informational — does not affect overall health) ──
     try {
         const { callAI } = require('../services/claudeService');
         const start = Date.now();
@@ -91,7 +91,7 @@ router.get('/health/deep', async (req, res) => {
     } catch (_err) {
         checks.ai = 'error';
         cachedAiStatus = 'error';
-        isHealthy = false;
+        // AI failure is non-critical — server is still healthy
     }
 
     // ── Memory ───────────────────────────────────────────
