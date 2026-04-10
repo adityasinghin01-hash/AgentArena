@@ -7,13 +7,20 @@ const mongoose = require('mongoose');
 const os = require('os');
 const router = express.Router();
 
+// ── Version — single authoritative source ────────────────────
+const appVersion = process.env.APP_VERSION || require('../package.json').version;
+
+// ── Cached AI status ─────────────────────────────────────────
+// Updated by /api/health/deep to avoid burning AI quota on every probe.
+let cachedAiStatus = 'unknown';
+
 // ── GET /api/health ──────────────────────────────────────
 // Lightweight probe with AgentArena stats.
 // Render probes this every 30s — keeps DB queries minimal.
+// Uses cached AI status (never calls AI directly).
 router.get('/health', async (req, res) => {
     let agentsCount = 0;
     let pipelinesCount = 0;
-    let aiStatus = 'unknown';
 
     try {
         // Lazy-require to avoid circular deps at module load
@@ -28,32 +35,26 @@ router.get('/health', async (req, res) => {
         // DB not ready yet — return zeros
     }
 
-    try {
-        const { callAI } = require('../services/claudeService');
-        await callAI('Respond with OK', 'ping', 10);
-        aiStatus = 'ok';
-    } catch (_err) {
-        aiStatus = 'error';
-    }
-
     return res.status(200).json({
         status: 'ok',
-        version: 'AgentArena v1.0.0',
+        version: `AgentArena v${appVersion}`,
         uptime: Math.floor(process.uptime()),
         timestamp: new Date().toISOString(),
         agentsCount,
         pipelinesCount,
-        aiStatus,
+        aiStatus: cachedAiStatus,
     });
 });
 
 // ── GET /api/health/deep ─────────────────────────────────
-// Full diagnostic — checks MongoDB, memory, readiness.
+// Full diagnostic — checks MongoDB, memory, AI provider, readiness.
+// Also updates the cached AI status for the shallow probe.
 // Use for debugging, dashboards, and alerting.
 // Returns 200 if all healthy, 503 if degraded.
 router.get('/health/deep', async (req, res) => {
     const checks = {
         database: 'unknown',
+        ai: 'unknown',
         memory: {},
         server: {},
     };
@@ -79,6 +80,20 @@ router.get('/health/deep', async (req, res) => {
         isHealthy = false;
     }
 
+    // ── AI Provider ──────────────────────────────────────
+    try {
+        const { callAI } = require('../services/claudeService');
+        const start = Date.now();
+        await callAI('Respond with OK', 'ping', 10);
+        checks.ai = 'ok';
+        checks.aiResponseMs = Date.now() - start;
+        cachedAiStatus = 'ok';
+    } catch (_err) {
+        checks.ai = 'error';
+        cachedAiStatus = 'error';
+        isHealthy = false;
+    }
+
     // ── Memory ───────────────────────────────────────────
     const mem = process.memoryUsage();
     const totalMem = os.totalmem();
@@ -99,6 +114,7 @@ router.get('/health/deep', async (req, res) => {
 
     // ── Server Info ──────────────────────────────────────
     checks.server = {
+        version: `AgentArena v${appVersion}`,
         nodeVersion: process.version,
         platform: process.platform,
         uptime: `${Math.floor(process.uptime())}s`,
@@ -119,4 +135,3 @@ router.get('/health/deep', async (req, res) => {
 });
 
 module.exports = router;
-
