@@ -2,6 +2,7 @@
 // Integration tests for webhook CRUD endpoints.
 // Creates a verified test user directly in DB to bypass recaptcha + email verification.
 
+require('dotenv').config();
 const request = require('supertest');
 const mongoose = require('mongoose');
 
