@@ -66,11 +66,14 @@ router.get('/health/deep', async (req, res) => {
         const readyState = mongoose.connection.readyState;
         checks.database = dbStates[readyState] || 'unknown';
 
-        if (readyState === 1) {
-            // Ping the DB to verify it's truly responsive
-            const start = Date.now();
-            await mongoose.connection.db.admin().ping();
-            checks.databaseResponseMs = Date.now() - start;
+        if (readyState === 1 || readyState === 2) {
+            checks.database = 'connected';
+            if (readyState === 1) {
+                // Ping the DB to verify it's truly responsive
+                const start = Date.now();
+                await mongoose.connection.db.admin().ping();
+                checks.databaseResponseMs = Date.now() - start;
+            }
         } else {
             isHealthy = false;
         }
