@@ -1,6 +1,7 @@
 // tests/health.test.js
 // Integration tests for health check endpoints.
 
+require('dotenv').config();
 const request = require('supertest');
 const mongoose = require('mongoose');
 
