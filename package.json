@@ -1,8 +1,11 @@
 {
-  "name": "backend",
+  "name": "agentarena-backend",
   "version": "1.0.0",
-  "description": "Reusable Node.js auth backend boilerplate",
+  "description": "AgentArena — AI Agent Marketplace Backend",
   "main": "server.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",

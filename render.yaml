@@ -1,10 +1,9 @@
 # render.yaml
 # Infrastructure-as-Code for Render deployment.
-# Per ARCHITECTURE_MAP and TECH_DECISIONS §4.
 
 services:
   - type: web
-    name: auth-backend
+    name: agentarena-backend
     env: node
     buildCommand: npm install
     startCommand: npm start
@@ -12,3 +11,19 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_ACCESS_SECRET
+        sync: false
+      - key: JWT_REFRESH_SECRET
+        sync: false
+      - key: API_KEY_SALT
+        sync: false
+      - key: WEBHOOK_SECRET_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: AI_PROVIDER
+        value: groq
+      - key: SEED_USER_ID
+        sync: false
