@@ -71,4 +71,8 @@ router.use('/pipeline', pipelineRoutes);
 // ── AgentArena: Auditions ────────────────────────────────
 router.use('/audition', auditionRoutes);
 
+// ── AgentArena: Evaluator ────────────────────────────────
+const evaluateRoutes = require('./evaluate.routes');
+router.use('/evaluate', evaluateRoutes);
+
 module.exports = router;

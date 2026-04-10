@@ -8,13 +8,42 @@ const os = require('os');
 const router = express.Router();
 
 // ── GET /api/health ──────────────────────────────────────
-// Lightweight — no DB calls. Render probes this every 30s.
-// Must respond fast (<100ms) even if DB is connecting.
-router.get('/health', (req, res) => {
+// Lightweight probe with AgentArena stats.
+// Render probes this every 30s — keeps DB queries minimal.
+router.get('/health', async (req, res) => {
+    let agentsCount = 0;
+    let pipelinesCount = 0;
+    let aiStatus = 'unknown';
+
+    try {
+        // Lazy-require to avoid circular deps at module load
+        const Agent = require('../models/Agent');
+        const Pipeline = require('../models/Pipeline');
+
+        [agentsCount, pipelinesCount] = await Promise.all([
+            Agent.countDocuments({ isActive: true }),
+            Pipeline.countDocuments(),
+        ]);
+    } catch (_err) {
+        // DB not ready yet — return zeros
+    }
+
+    try {
+        const { callAI } = require('../services/claudeService');
+        await callAI('Respond with OK', 'ping', 10);
+        aiStatus = 'ok';
+    } catch (_err) {
+        aiStatus = 'error';
+    }
+
     return res.status(200).json({
         status: 'ok',
+        version: 'AgentArena v1.0.0',
         uptime: Math.floor(process.uptime()),
         timestamp: new Date().toISOString(),
+        agentsCount,
+        pipelinesCount,
+        aiStatus,
     });
 });
 
