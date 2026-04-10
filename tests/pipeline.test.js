@@ -20,7 +20,6 @@ let Pipeline;
 let token;
 let userId;
 let mockAgent1Id;
-let mockAgent2Id;
 let pipelineId;
 
 beforeAll(async () => {
@@ -67,7 +66,7 @@ beforeAll(async () => {
   });
   mockAgent1Id = a1._id;
 
-  const a2 = await Agent.create({
+  await Agent.create({
     name: 'Content Writer',
     description: 'Writes documentation.',
     category: 'writer',
@@ -76,7 +75,6 @@ beforeAll(async () => {
     pricing: 'free',
     creator_id: userId
   });
-  mockAgent2Id = a2._id;
 });
 
 afterAll(async () => {

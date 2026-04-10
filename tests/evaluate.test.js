@@ -56,7 +56,7 @@ afterAll(async () => {
     if (userId) {
       await User.findByIdAndDelete(userId);
     }
-  } catch (err) {}
+  } catch (_err) {}
   if (mongoose.connection.readyState !== 0) {
     await mongoose.connection.close();
   }
