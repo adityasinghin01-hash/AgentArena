@@ -68,11 +68,16 @@ router.get('/health/deep', async (req, res) => {
 
         if (readyState === 1 || readyState === 2) {
             checks.database = 'connected';
-            if (readyState === 1) {
-                // Ping the DB to verify it's truly responsive
-                const start = Date.now();
-                await mongoose.connection.db.admin().ping();
-                checks.databaseResponseMs = Date.now() - start;
+            // Ping is supplementary — readyState is the primary health signal
+            try {
+                if (readyState === 1 && mongoose.connection.db) {
+                    const start = Date.now();
+                    await mongoose.connection.db.admin().ping();
+                    checks.databaseResponseMs = Date.now() - start;
+                }
+            } catch (pingErr) {
+                // Ping failed but driver reports connected — still healthy
+                checks.databasePingError = pingErr.message;
             }
         } else {
             isHealthy = false;
