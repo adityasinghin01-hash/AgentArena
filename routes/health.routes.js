@@ -135,6 +135,19 @@ router.get('/health/deep', async (req, res) => {
         isHealthy = false;
     }
 
+    // DEBUG: trace 503 cause in CI — remove after diagnosis
+    if (!isHealthy) {
+        console.log('[HEALTH-DEBUG]', JSON.stringify({
+            isHealthy,
+            readyState: mongoose.connection.readyState,
+            dbCheck: checks.database,
+            dbError: checks.databaseError,
+            pingError: checks.databasePingError,
+            isReady: req.app.locals.isReady,
+            rssBytes: process.memoryUsage().rss,
+        }));
+    }
+
     return res.status(isHealthy ? 200 : 503).json({
         status: isHealthy ? 'healthy' : 'degraded',
         timestamp: new Date().toISOString(),
