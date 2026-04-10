@@ -1,0 +1,446 @@
+  console.log
+    [dotenv@17.3.1] injecting env (21) from .env -- tip: 🛡️ auth for agents: https://vestauth.com
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (21) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (21) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (21) from .env -- tip: 🛡️ auth for agents: https://vestauth.com
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (21) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: ⚙️  write to custom object with { processEnv: myObject }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+  console.log
+    [dotenv@17.3.1] injecting env (0) from .env -- tip: 🛡️ auth for agents: https://vestauth.com
+
+      at _log (node_modules/dotenv/lib/main.js:139:11)
+
+2026-04-10 15:09:22 [[33mwarn[39m]: Rate limiter: falling back to in-memory store {"service":"adv-backend"}
+2026-04-10 15:09:22 [[33mwarn[39m]: Rate limiter: falling back to in-memory store {"service":"adv-backend"}
+2026-04-10 15:09:22 [[33mwarn[39m]: Rate limiter: falling back to in-memory store {"service":"adv-backend"}
+2026-04-10 15:09:23 [[33mwarn[39m]: Rate limiter: falling back to in-memory store {"service":"adv-backend"}
+2026-04-10 15:09:23 [[33mwarn[39m]: Rate limiter: falling back to in-memory store {"service":"adv-backend"}
+2026-04-10 15:09:25 [[32mhttp[39m]: a15b7219-7010-4c56-9d76-d54c115e3ea7 POST /api/v1/login 200 852 - 972.945 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:25 [[32mhttp[39m]: 628c0d18-f3fc-4249-a637-26d6f2269d2f POST /api/v1/login 200 863 - 972.776 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:25 [[32mhttp[39m]: f7544a2c-984d-43d9-b41d-714091ba97e9 POST /api/v1/login 200 863 - 1104.134 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:25 [[32minfo[39m]: Agent created {"service":"adv-backend","agentId":"69d8c54dba022a79f29ff4d3","name":"Test Linter Agent","category":"linter","deployedBy":"69d8c54bba022a79f29ff4b6"}
+2026-04-10 15:09:25 [[32mhttp[39m]: d851d926-f1b3-40e1-83a2-2a994d1a5a44 POST /api/v1/agents 201 533 - 211.796 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:25 [[32mhttp[39m]: 58465138-5806-4501-816a-4e037b2ffed1 POST /api/v1/agents 400 363 - 64.445 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:25 [[32mhttp[39m]: feb38367-3c98-488d-9daf-db1d7552fd9c POST /api/v1/pipeline/create 400 119 - 92.112 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:25 [[32mhttp[39m]: 5c10aba1-ad47-4c44-93ac-c93f1f864c78 GET /api/v1/agents 200 9416 - 159.038 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:25 [[32mhttp[39m]: 7b8fb72e-9015-4011-8ff6-aba2eb715a99 POST /api/v1/pipeline/create 400 119 - 86.668 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+FAIL tests/audition.test.js (5.135 s)
+  GET Audition APIs
+    ✕ should return 404 for missing audition (5 ms)
+    ✕ should retrieve my audition via GET /api/v1/audition/:id
+    ✕ should retrieve paginated auditions by pipeline via GET /api/v1/audition/pipeline/:pipelineId
+  POST /api/v1/audition/run/:pipelineId
+    ✕ should execute the audition and stream results (200 OK text/event-stream)
+
+  ● GET Audition APIs › should return 404 for missing audition
+
+    ValidationError: Pipeline validation failed: slots.0.evaluationCriteria: Evaluation criteria is required
+
+      71 |
+      72 |   // Create mock pipeline
+    > 73 |   const pipeline = await Pipeline.create({
+         |                    ^
+      74 |     userId,
+      75 |     outcomeText: 'Test Audition',
+      76 |     slots: [
+
+      at model.Document.invalidate (node_modules/mongoose/lib/document.js:3433:32)
+      at EmbeddedDocument.Subdocument.invalidate (node_modules/mongoose/lib/types/subdocument.js:231:12)
+      at EmbeddedDocument.validate (node_modules/mongoose/lib/document.js:2866:13)
+          at async Promise.all (index 0)
+      at SchemaDocumentArray.doValidate (node_modules/mongoose/lib/schema/documentArray.js:269:3)
+          at async Promise.all (index 2)
+      at model.validate (node_modules/mongoose/lib/document.js:2857:30)
+      at model.$__save (node_modules/mongoose/lib/model.js:390:7)
+      at model.save (node_modules/mongoose/lib/model.js:664:5)
+      at model.create (node_modules/mongoose/lib/model.js:2751:5)
+      at Object.<anonymous> (tests/audition.test.js:73:20)
+
+  ● GET Audition APIs › should return 404 for missing audition
+
+    ValidationError: Audition validation failed: pipelineId: Pipeline reference is required
+
+      109 |   beforeAll(async () => {
+      110 |     // Create a mock audition history
+    > 111 |     const aud = await Audition.create({
+          |                 ^
+      112 |       userId,
+      113 |       pipelineId,
+      114 |       userInput: "Sample mock input for history",
+
+      at model.validate (node_modules/mongoose/lib/document.js:2864:36)
+      at model.$__save (node_modules/mongoose/lib/model.js:390:7)
+      at model.save (node_modules/mongoose/lib/model.js:664:5)
+      at model.create (node_modules/mongoose/lib/model.js:2751:5)
+      at Object.<anonymous> (tests/audition.test.js:111:17)
+
+  ● GET Audition APIs › should retrieve my audition via GET /api/v1/audition/:id
+
+    ValidationError: Pipeline validation failed: slots.0.evaluationCriteria: Evaluation criteria is required
+
+      71 |
+      72 |   // Create mock pipeline
+    > 73 |   const pipeline = await Pipeline.create({
+         |                    ^
+      74 |     userId,
+      75 |     outcomeText: 'Test Audition',
+      76 |     slots: [
+
+      at model.Document.invalidate (node_modules/mongoose/lib/document.js:3433:32)
+      at EmbeddedDocument.Subdocument.invalidate (node_modules/mongoose/lib/types/subdocument.js:231:12)
+      at EmbeddedDocument.validate (node_modules/mongoose/lib/document.js:2866:13)
+          at async Promise.all (index 0)
+      at SchemaDocumentArray.doValidate (node_modules/mongoose/lib/schema/documentArray.js:269:3)
+          at async Promise.all (index 2)
+      at model.validate (node_modules/mongoose/lib/document.js:2857:30)
+      at model.$__save (node_modules/mongoose/lib/model.js:390:7)
+      at model.save (node_modules/mongoose/lib/model.js:664:5)
+      at model.create (node_modules/mongoose/lib/model.js:2751:5)
+      at Object.<anonymous> (tests/audition.test.js:73:20)
+
+  ● GET Audition APIs › should retrieve my audition via GET /api/v1/audition/:id
+
+    ValidationError: Audition validation failed: pipelineId: Pipeline reference is required
+
+      109 |   beforeAll(async () => {
+      110 |     // Create a mock audition history
+    > 111 |     const aud = await Audition.create({
+          |                 ^
+      112 |       userId,
+      113 |       pipelineId,
+      114 |       userInput: "Sample mock input for history",
+
+      at model.validate (node_modules/mongoose/lib/document.js:2864:36)
+      at model.$__save (node_modules/mongoose/lib/model.js:390:7)
+      at model.save (node_modules/mongoose/lib/model.js:664:5)
+      at model.create (node_modules/mongoose/lib/model.js:2751:5)
+      at Object.<anonymous> (tests/audition.test.js:111:17)
+
+  ● GET Audition APIs › should retrieve paginated auditions by pipeline via GET /api/v1/audition/pipeline/:pipelineId
+
+    ValidationError: Pipeline validation failed: slots.0.evaluationCriteria: Evaluation criteria is required
+
+      71 |
+      72 |   // Create mock pipeline
+    > 73 |   const pipeline = await Pipeline.create({
+         |                    ^
+      74 |     userId,
+      75 |     outcomeText: 'Test Audition',
+      76 |     slots: [
+
+      at model.Document.invalidate (node_modules/mongoose/lib/document.js:3433:32)
+      at EmbeddedDocument.Subdocument.invalidate (node_modules/mongoose/lib/types/subdocument.js:231:12)
+      at EmbeddedDocument.validate (node_modules/mongoose/lib/document.js:2866:13)
+          at async Promise.all (index 0)
+      at SchemaDocumentArray.doValidate (node_modules/mongoose/lib/schema/documentArray.js:269:3)
+          at async Promise.all (index 2)
+      at model.validate (node_modules/mongoose/lib/document.js:2857:30)
+      at model.$__save (node_modules/mongoose/lib/model.js:390:7)
+      at model.save (node_modules/mongoose/lib/model.js:664:5)
+      at model.create (node_modules/mongoose/lib/model.js:2751:5)
+      at Object.<anonymous> (tests/audition.test.js:73:20)
+
+  ● GET Audition APIs › should retrieve paginated auditions by pipeline via GET /api/v1/audition/pipeline/:pipelineId
+
+    ValidationError: Audition validation failed: pipelineId: Pipeline reference is required
+
+      109 |   beforeAll(async () => {
+      110 |     // Create a mock audition history
+    > 111 |     const aud = await Audition.create({
+          |                 ^
+      112 |       userId,
+      113 |       pipelineId,
+      114 |       userInput: "Sample mock input for history",
+
+      at model.validate (node_modules/mongoose/lib/document.js:2864:36)
+      at model.$__save (node_modules/mongoose/lib/model.js:390:7)
+      at model.save (node_modules/mongoose/lib/model.js:664:5)
+      at model.create (node_modules/mongoose/lib/model.js:2751:5)
+      at Object.<anonymous> (tests/audition.test.js:111:17)
+
+  ● POST /api/v1/audition/run/:pipelineId › should execute the audition and stream results (200 OK text/event-stream)
+
+    ValidationError: Pipeline validation failed: slots.0.evaluationCriteria: Evaluation criteria is required
+
+      71 |
+      72 |   // Create mock pipeline
+    > 73 |   const pipeline = await Pipeline.create({
+         |                    ^
+      74 |     userId,
+      75 |     outcomeText: 'Test Audition',
+      76 |     slots: [
+
+      at model.Document.invalidate (node_modules/mongoose/lib/document.js:3433:32)
+      at EmbeddedDocument.Subdocument.invalidate (node_modules/mongoose/lib/types/subdocument.js:231:12)
+      at EmbeddedDocument.validate (node_modules/mongoose/lib/document.js:2866:13)
+          at async Promise.all (index 0)
+      at SchemaDocumentArray.doValidate (node_modules/mongoose/lib/schema/documentArray.js:269:3)
+          at async Promise.all (index 2)
+      at model.validate (node_modules/mongoose/lib/document.js:2857:30)
+      at model.$__save (node_modules/mongoose/lib/model.js:390:7)
+      at model.save (node_modules/mongoose/lib/model.js:664:5)
+      at model.create (node_modules/mongoose/lib/model.js:2751:5)
+      at Object.<anonymous> (tests/audition.test.js:73:20)
+
+2026-04-10 15:09:25 [[32mhttp[39m]: 617602ee-b2da-4c0e-8218-e83c35b8ee2f POST /api/v1/pipeline/create 400 102 - 60.507 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:25 [[32mhttp[39m]: 370c449f-ac9d-43ef-9627-6c05ad3dd2dd POST /api/v1/login 200 859 - 1532.186 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:26 [[32mhttp[39m]: f29c7e56-cea7-47b2-b2b3-363746b1f58d GET /api/v1/agents/69d8c54dba022a79f29ff4d3 200 526 - 152.924 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:26 [[32mhttp[39m]: 507dd0d9-f035-4669-a1e2-7c7c374c89d2 POST /api/v1/login 200 863 - 1855.374 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:26 [[32mhttp[39m]: 30c486ac-bca2-46da-8409-2c8664ba918e GET /api/v1/pipeline/undefined 400 75 - 98.785 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:26 [[32mhttp[39m]: c512c90f-9400-4e9a-8f1f-3bb86a3adfad POST /api/v1/outcome/decompose 200 303 - 93.222 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:26 [[32mhttp[39m]: becc3f9a-f5df-4a9b-b710-0dada8fd6a87 GET /api/v1/agents/69d8c54eba022a79f29ff4de 404 46 - 74.364 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:26 [[32mhttp[39m]: 4d1fa3c6-6110-4f4e-bb6d-f874bdcc0617 GET /api/v1/agents/not-an-id-12345 400 54 - 0.208 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:26 [[32mhttp[39m]: fcb9a30d-0737-4faa-93a0-4606ebb2abad POST /api/v1/outcome/decompose 400 167 - 75.876 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:26 [[32mhttp[39m]: 80cd4a6d-8fa3-446d-aec5-5aefbf21cd9a POST /api/v1/evaluate 200 101 - 109.014 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:26 [[32mhttp[39m]: 16097bd9-568d-4205-a8a4-a56c526578d9 GET /api/v1/pipeline/invalid-id 400 75 - 74.302 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:26 [[31merror[39m]: Outcome decomposition failed {"service":"adv-backend","userId":"69d8c54b204e43ee16f05fce","error":"AI is down"}
+2026-04-10 15:09:26 [[32mhttp[39m]: 147cd61d-3572-4ecb-b4ec-daae70694d7a POST /api/v1/evaluate 400 116 - 69.379 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:26 [[31merror[39m] [10301c68-f1f4-46a0-a7e7-b3ea82244c75]: AI is down {"statusCode":500,"method":"POST","url":"/api/v1/outcome/decompose","userId":"69d8c54b204e43ee16f05fce","ip":"::ffff:127.0.0.1","stack":"Error: AI is down\n    at Object.<anonymous> (/Users/aditya/Desktop/AgentArena/tests/outcome.test.js:118:58)\n    at Promise.finally.completed (/Users/aditya/Desktop/AgentArena/node_modules/jest-circus/build/jestAdapterInit.js:1557:28)\n    at new Promise (<anonymous>)\n    at callAsyncCircusFn (/Users/aditya/Desktop/AgentArena/node_modules/jest-circus/build/jestAdapterInit.js:1497:10)\n    at _callCircusTest (/Users/aditya/Desktop/AgentArena/node_modules/jest-circus/build/jestAdapterInit.js:1007:40)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)\n    at _runTest (/Users/aditya/Desktop/AgentArena/node_modules/jest-circus/build/jestAdapterInit.js:947:3)\n    at /Users/aditya/Desktop/AgentArena/node_modules/jest-circus/build/jestAdapterInit.js:849:7\n    at _runTestsForDescribeBlock (/Users/aditya/Desktop/AgentArena/node_modules/jest-circus/build/jestAdapterInit.js:862:11)\n    at _runTestsForDescribeBlock (/Users/aditya/Desktop/AgentArena/node_modules/jest-circus/build/jestAdapterInit.js:857:11)\n    at run (/Users/aditya/Desktop/AgentArena/node_modules/jest-circus/build/jestAdapterInit.js:761:3)\n    at runAndTransformResultsToJestFormat (/Users/aditya/Desktop/AgentArena/node_modules/jest-circus/build/jestAdapterInit.js:1918:21)\n    at jestAdapter (/Users/aditya/Desktop/AgentArena/node_modules/jest-circus/build/runner.js:101:19)\n    at runTestInternal (/Users/aditya/Desktop/AgentArena/node_modules/jest-runner/build/testWorker.js:275:16)\n    at runTest (/Users/aditya/Desktop/AgentArena/node_modules/jest-runner/build/testWorker.js:343:7)\n    at Object.worker (/Users/aditya/Desktop/AgentArena/node_modules/jest-runner/build/testWorker.js:497:12)","service":"adv-backend"}
+2026-04-10 15:09:26 [[32mhttp[39m]: 10301c68-f1f4-46a0-a7e7-b3ea82244c75 POST /api/v1/outcome/decompose 500 96 - 73.412 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:26 [[32mhttp[39m]: e2cc85f4-2219-4ce3-90be-e1d8d3d741e1 GET /api/v1/agents/category/linter 200 2318 - 143.326 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:26 [[32mhttp[39m]: f204b0f4-12ea-497b-8ef7-eddf1c8ed50d GET /api/v1/agents/category/invalidcat 400 181 - 0.561 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+PASS tests/outcome.test.js (5.604 s)
+  POST /api/v1/outcome/decompose
+    ✓ should successfully decompose outcome into slots and return 200 (99 ms)
+    ✓ should return 400 if outcomeText is missing or empty (78 ms)
+    ✓ should return 500 if the AI service throws an error (76 ms)
+
+PASS tests/evaluate.test.js (5.61 s)
+  POST /api/v1/evaluate
+    ✓ should successfully evaluate and return scores 200 (116 ms)
+    ✓ should fail with 400 validation error if task is missing (72 ms)
+
+2026-04-10 15:09:26 [[31merror[39m] [13ebc70a-3459-4a8a-804b-8c900d2cec34]: Pipeline not found {"statusCode":404,"method":"GET","url":"/api/v1/pipeline/69d8c54e25842973521a95db","userId":"69d8c54b25842973521a95b0","ip":"::ffff:127.0.0.1","stack":"AppError: Pipeline not found\n    at getPipeline (/Users/aditya/Desktop/AgentArena/controllers/pipelineController.js:154:19)\n    at processTicksAndRejections (node:internal/process/task_queues:103:5)","service":"adv-backend"}
+2026-04-10 15:09:26 [[32mhttp[39m]: 13ebc70a-3459-4a8a-804b-8c900d2cec34 GET /api/v1/pipeline/69d8c54e25842973521a95db 404 112 - 217.878 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:26 [[32minfo[39m]: Agent updated {"service":"adv-backend","agentId":"69d8c54dba022a79f29ff4d3","updatedBy":"69d8c54bba022a79f29ff4b6"}
+2026-04-10 15:09:26 [[32mhttp[39m]: ac2da2dc-6add-48e8-b43c-c4fb25b19935 PUT /api/v1/agents/69d8c54dba022a79f29ff4d3 200 529 - 277.156 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+FAIL tests/pipeline.test.js (5.93 s)
+  POST /api/v1/pipeline/create
+    ✕ should create a pipeline using explicit agent assignments and return 201 (97 ms)
+    ✕ should auto-match agents if assigned_agent_ids are missing or empty (88 ms)
+    ✓ should return 400 for empty slots (62 ms)
+  GET /api/v1/pipeline/:id
+    ✕ should return the populated pipeline with 200 (101 ms)
+    ✓ should return 400 for invalid ID (97 ms)
+    ✓ should return 404 for non-existent pipeline (220 ms)
+
+  ● POST /api/v1/pipeline/create › should create a pipeline using explicit agent assignments and return 201
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 400
+
+      114 |       });
+      115 |
+    > 116 |     expect(res.statusCode).toBe(201);
+          |                            ^
+      117 |     expect(res.body.success).toBe(true);
+      118 |     expect(res.body.data.pipeline).toHaveProperty('_id');
+      119 |     
+
+      at Object.toBe (tests/pipeline.test.js:116:28)
+
+  ● POST /api/v1/pipeline/create › should auto-match agents if assigned_agent_ids are missing or empty
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 201
+    Received: 400
+
+      142 |       });
+      143 |
+    > 144 |     expect(res.statusCode).toBe(201);
+          |                            ^
+      145 |     expect(res.body.data.pipeline.slots[0].assigned_agent_ids.length).toBeGreaterThan(0);
+      146 |     // Ideally it matched the writer 
+      147 |   });
+
+      at Object.toBe (tests/pipeline.test.js:144:28)
+
+  ● GET /api/v1/pipeline/:id › should return the populated pipeline with 200
+
+    expect(received).toBe(expected) // Object.is equality
+
+    Expected: 200
+    Received: 400
+
+      168 |       .set('Authorization', `Bearer ${token}`);
+      169 |
+    > 170 |     expect(res.statusCode).toBe(200);
+          |                            ^
+      171 |     expect(res.body.success).toBe(true);
+      172 |     expect(res.body.data._id).toBe(pipelineId.toString());
+      173 |     
+
+      at Object.toBe (tests/pipeline.test.js:170:28)
+
+2026-04-10 15:09:26 [[32minfo[39m]: Agent soft-deleted {"service":"adv-backend","agentId":"69d8c54dba022a79f29ff4d3","deletedBy":"69d8c54bba022a79f29ff4b6"}
+2026-04-10 15:09:26 [[32mhttp[39m]: eb137340-49b7-4240-a1bf-ea0f7ff4d43e DELETE /api/v1/agents/69d8c54dba022a79f29ff4d3 200 56 - 234.744 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+2026-04-10 15:09:26 [[32mhttp[39m]: b0a8f74a-bcc9-447e-9a9a-ebbc28b6f67b GET /api/v1/agents/69d8c54dba022a79f29ff4d3 404 46 - 66.019 ms [::ffff:127.0.0.1] {"service":"adv-backend"}
+PASS tests/agents.test.js (6.343 s)
+  POST /api/v1/agents
+    ✓ should create an agent and return 201 (228 ms)
+    ✓ should return 400 for invalid category (66 ms)
+  GET /api/v1/agents
+    ✓ should return a list of agents with 200 (161 ms)
+  GET /api/v1/agents/:id
+    ✓ should return the created agent (156 ms)
+    ✓ should return 404 for a non-existent agent (76 ms)
+    ✓ should return 400 for an invalid ID format (1 ms)
+  GET /api/v1/agents/category/:category
+    ✓ should return agents in the linter category (146 ms)
+    ✓ should return 400 for an invalid category param (2 ms)
+  PUT /api/v1/agents/:id
+    ✓ should update the agent and return 200 (281 ms)
+  DELETE /api/v1/agents/:id
+    ✓ should delete the agent and return 200 (238 ms)
+    ✓ should return 404 viewing the deleted agent (68 ms)
+
+----------------------------|---------|----------|---------|---------|--------------------------------------------------------------------
+File                        | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s                                                  
+----------------------------|---------|----------|---------|---------|--------------------------------------------------------------------
+All files                   |   39.35 |    14.78 |    21.8 |   39.69 |                                                                    
+ AgentArena                 |     100 |      100 |     100 |     100 |                                                                    
+  app.js                    |     100 |      100 |     100 |     100 |                                                                    
+ AgentArena/config          |   84.37 |     62.5 |     100 |   83.87 |                                                                    
+  config.js                 |      70 |    63.33 |     100 |   66.66 | 20-23                                                              
+  logger.js                 |   86.66 |       60 |     100 |   86.66 | 41-54                                                              
+  roles.js                  |     100 |      100 |     100 |     100 |                                                                    
+  webhookEvents.js          |     100 |      100 |     100 |     100 |                                                                    
+ AgentArena/controllers     |    24.7 |    11.26 |    12.5 |   25.05 |                                                                    
+  adminController.js        |   10.76 |        0 |       0 |   10.76 | 14-40,50-91,101-134,144-172                                        
+  agentController.js        |    82.5 |       75 |     100 |    82.5 | 56,89,120,133,166,175,183,192,200,238,246,255,263,283              
+  apiKeyController.js       |   23.07 |        0 |       0 |   23.07 | 16-53,63-76,86-112,122-155                                         
+  auditionController.js     |   13.04 |        0 |       0 |   13.04 | 16-107,116-134,144-180                                             
+  authController.js         |   24.22 |    20.83 |   11.11 |   24.22 | 25-142,155,162,167,172-173,180-188,193,226,233-302,309-374,381-407 
+  blogController.js         |      12 |        0 |       0 |   12.85 | 7-36,42-64,70-78,84-118,124-132                                    
+  contactController.js      |   35.29 |        0 |       0 |   35.29 | 8-64                                                               
+  evaluatorController.js    |      80 |      100 |     100 |      80 | 24-28                                                              
+  newsletterController.js   |    20.4 |        0 |       0 |    20.4 | 11-59,65-101,107-112                                               
+  outcomeController.js      |     100 |      100 |     100 |     100 |                                                                    
+  passwordController.js     |   14.13 |        0 |       0 |   14.44 | 20-52,60-107,115-158,165-201,209-245                               
+  pipelineController.js     |   32.65 |     7.69 |    12.5 |   34.04 | 50-56,64-68,81-140,158-162,176-187                                 
+  subscriptionController.js |   15.49 |        0 |       0 |   15.49 | 18-30,40-69,79-203,213-261                                         
+  userController.js         |   27.27 |        0 |       0 |   27.27 | 12-28,38-48                                                        
+  verificationController.js |   20.33 |        0 |       0 |   20.33 | 21-132,141-182,191-207                                             
+  waitlistController.js     |   21.05 |        0 |       0 |   21.05 | 8-57,63-68,74-86                                                   
+  webhookController.js      |    11.5 |        0 |       0 |   12.03 | 17-64,74-86,96-114,124-169,179-212,222-261,271-300                 
+ AgentArena/middleware      |   60.62 |    44.08 |   76.92 |   61.53 |                                                                    
+  authMiddleware.js         |   77.27 |       50 |     100 |   77.27 | 22-29,42,50                                                        
+  errorHandler.js           |   70.37 |     60.6 |     100 |   86.36 | 24,28,64                                                           
+  rateLimiter.js            |   46.34 |    36.36 |   33.33 |      45 | 14-25,42-56,68-73                                                  
+  rbacMiddleware.js         |   18.51 |        0 |   33.33 |   18.51 | 15-71                                                              
+  recaptchaMiddleware.js    |   17.64 |        0 |       0 |   17.64 | 8-31                                                               
+  requestId.js              |     100 |      100 |     100 |     100 |                                                                    
+  requestLogger.js          |     100 |       50 |     100 |     100 | 15                                                                 
+  securityHeaders.js        |   91.66 |       50 |     100 |   91.66 | 29                                                                 
+  validate.js               |   81.81 |    66.66 |    87.5 |      85 | 10,58-59                                                           
+  validateRequest.js        |     100 |      100 |     100 |     100 |                                                                    
+ AgentArena/models          |   81.73 |       10 |   26.66 |    82.3 |                                                                    
+  Agent.js                  |     100 |      100 |     100 |     100 |                                                                    
+  ApiKey.js                 |     100 |      100 |     100 |     100 |                                                                    
+  Audition.js               |   91.66 |      100 |       0 |   91.66 | 45                                                                 
+  Blog.js                   |     100 |      100 |     100 |     100 |                                                                    
+  Contact.js                |     100 |      100 |     100 |     100 |                                                                    
+  Pipeline.js               |     100 |      100 |     100 |     100 |                                                                    
+  Plan.js                   |   66.66 |        0 |       0 |   66.66 | 52-65                                                              
+  Subscriber.js             |     100 |      100 |     100 |     100 |                                                                    
+  Subscription.js           |   83.33 |        0 |       0 |   83.33 | 38                                                                 
+  User.js                   |     100 |      100 |     100 |     100 |                                                                    
+  Waitlist.js               |     100 |      100 |     100 |     100 |                                                                    
+  Webhook.js                |   39.28 |        0 |       0 |   40.74 | 19-31,56-60,66,71-74,79-82                                         
+  WebhookDelivery.js        |     100 |      100 |     100 |     100 |                                                                    
+ AgentArena/routes          |   17.24 |     8.33 |       0 |   17.24 |                                                                    
+  health.routes.js          |   17.24 |     8.33 |       0 |   17.24 | 23-39,56-154                                                       
+ AgentArena/routes/v1       |   98.77 |        0 |       0 |   98.77 |                                                                    
+  admin.routes.js           |   81.25 |        0 |       0 |   81.25 | 16-22                                                              
+  agents.routes.js          |     100 |      100 |     100 |     100 |                                                                    
+  apikeys.routes.js         |     100 |      100 |     100 |     100 |                                                                    
+  audition.routes.js        |     100 |      100 |     100 |     100 |                                                                    
+  auth.routes.js            |     100 |      100 |     100 |     100 |                                                                    
+  blog.routes.js            |     100 |      100 |     100 |     100 |                                                                    
+  contact.routes.js         |     100 |      100 |     100 |     100 |                                                                    
+  evaluate.routes.js        |     100 |      100 |     100 |     100 |                                                                    
+  index.js                  |     100 |      100 |     100 |     100 |                                                                    
+  newsletter.routes.js      |     100 |      100 |     100 |     100 |                                                                    
+  outcome.routes.js         |     100 |      100 |     100 |     100 |                                                                    
+  password.routes.js        |     100 |      100 |     100 |     100 |                                                                    
+  pipeline.routes.js        |     100 |      100 |     100 |     100 |                                                                    
+  subscription.routes.js    |     100 |      100 |     100 |     100 |                                                                    
+  user.routes.js            |     100 |      100 |     100 |     100 |                                                                    
+  verification.routes.js    |     100 |      100 |     100 |     100 |                                                                    
+  waitlist.routes.js        |     100 |      100 |     100 |     100 |                                                                    
+  webhooks.routes.js        |     100 |      100 |     100 |     100 |                                                                    
+ AgentArena/services        |   16.34 |     0.49 |     3.5 |   16.63 |                                                                    
+  apiKeyService.js          |   16.07 |        0 |       0 |   16.07 | 18-36,46-86,94-127                                                 
+  auditionService.js        |   11.36 |        0 |       0 |   11.49 | 13-22,28-52,66-90,105-147,171-310                                  
+  claudeService.js          |   13.58 |        0 |       0 |   13.75 | 18-54,65-69,80-89,106-182,196-219,232-264,283                      
+  emailService.js           |    37.5 |        0 |       0 |    37.5 | 7-30,35-36,56-57,77                                                
+  subscriptionService.js    |   14.28 |        0 |       0 |   14.28 | 15-50,62-113,130-151                                               
+  tokenService.js           |     100 |    33.33 |     100 |     100 | 24-25                                                              
+  webhookService.js         |   14.53 |        0 |       0 |   15.06 | 26-37,52-57,65-92,106-130,143-269,285-360,371-419,427-432,441-453  
+ AgentArena/utils           |      48 |        0 |      50 |      48 |                                                                    
+  AppError.js               |     100 |        0 |     100 |     100 | 7                                                                  
+  hashToken.js              |     100 |      100 |     100 |     100 |                                                                    
+  passwordValidator.js      |   14.28 |        0 |       0 |   14.28 | 6-24                                                               
+  slugGenerator.js          |   66.66 |      100 |       0 |   66.66 | 2                                                                  
+----------------------------|---------|----------|---------|---------|--------------------------------------------------------------------
+Test Suites: 2 failed, 3 passed, 5 total
+Tests:       7 failed, 19 passed, 26 total
+Snapshots:   0 total
+Time:        6.751 s, estimated 8 s
+Ran all test suites matching tests/pipeline.test.js|tests/audition.test.js|tests/evaluate.test.js|tests/agents.test.js|tests/outcome.test.js.
