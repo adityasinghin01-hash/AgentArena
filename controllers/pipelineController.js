@@ -57,15 +57,36 @@ const inferCategory = (slotName) => {
 };
 
 /**
- * Fetches top agents for a given category, sorted by reliabilityScore desc.
- * Returns up to `limit` active agents.
+ * Fetches agents for a slot — ALWAYS returns `limit` agents.
+ * Strategy: grab matching-category agents first, then backfill
+ * from other categories (sorted by reliability) to hit the target.
+ * This ensures every slot has 3 competitors for side-by-side battles.
  */
 const getTopAgentsByCategory = async (category, limit = 3) => {
-    const agents = await Agent.find({ category, isActive: true })
+    // 1. Get agents from the matching category
+    const matched = await Agent.find({ category, isActive: true })
         .sort({ reliabilityScore: -1, createdAt: -1 })
         .limit(limit)
         .select('_id');
-    return agents.map((a) => a._id);
+
+    const ids = matched.map((a) => a._id);
+
+    // 2. If we already have enough, return
+    if (ids.length >= limit) {
+        return ids;
+    }
+
+    // 3. Backfill from OTHER categories (exclude already-selected agents)
+    const remaining = limit - ids.length;
+    const backfill = await Agent.find({
+        _id: { $nin: ids },
+        isActive: true,
+    })
+        .sort({ reliabilityScore: -1, createdAt: -1 })
+        .limit(remaining)
+        .select('_id');
+
+    return [...ids, ...backfill.map((a) => a._id)];
 };
 
 // ═══════════════════════════════════════════════════════════════
