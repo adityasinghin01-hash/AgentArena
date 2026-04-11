@@ -9,6 +9,9 @@ module.exports = [
     ignores: ['frontend/**', 'frontend-next/**'],
   },
   {
+    ignores: ['frontend/**', 'frontend-next/**'],
+  },
+  {
     languageOptions: {
       ecmaVersion: 2021,
       globals: {
