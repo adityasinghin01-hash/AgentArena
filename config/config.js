@@ -52,6 +52,7 @@ const config = {
     AI_PROVIDER: process.env.AI_PROVIDER || 'groq',
     GROQ_API_KEY: process.env.GROQ_API_KEY,
     CLAUDE_API_KEY: process.env.CLAUDE_API_KEY,
+    GEMINI_API_KEY: process.env.GEMINI_API_KEY,
     AI_TIMEOUT_MS: parseInt(process.env.AI_TIMEOUT_MS, 10) || 30000,
 };
 

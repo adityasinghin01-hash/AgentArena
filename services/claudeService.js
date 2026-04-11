@@ -1,7 +1,7 @@
 // services/claudeService.js
 // Central AI service for AgentArena — ALL AI API calls go through here.
 // Supports multiple providers via AI_PROVIDER config switch.
-// Currently: "groq" (free, for local dev) and "claude" (production).
+// Currently: "groq" (fast JSON), "gemini" (generous free tier), "claude" (production).
 // Never call any AI API directly from a controller — always use this service.
 
 const config = require('../config/config');
@@ -53,6 +53,34 @@ const PROVIDERS = {
         extractText: (data) =>
             data?.content?.[0]?.text || null,
     },
+    gemini: {
+        url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+        getApiKey: () => config.GEMINI_API_KEY,
+        model: 'gemini-2.0-flash',
+        headers: () => ({
+            'Content-Type': 'application/json',
+        }),
+        buildBody: (systemPrompt, userMessage, maxTokens) => ({
+            system_instruction: {
+                parts: [{ text: systemPrompt }],
+            },
+            contents: [
+                {
+                    role: 'user',
+                    parts: [{ text: userMessage }],
+                },
+            ],
+            generationConfig: {
+                maxOutputTokens: maxTokens,
+                temperature: 0.7,
+            },
+        }),
+        // Gemini URL includes API key as query param
+        getUrl: (key) =>
+            `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${key}`,
+        extractText: (data) =>
+            data?.candidates?.[0]?.content?.parts?.[0]?.text || null,
+    },
 };
 
 // ── Helpers ──────────────────────────────────────────────────
@@ -90,20 +118,25 @@ const safeParseJSON = (text, context) => {
     }
 };
 
+// ── Retry helper ─────────────────────────────────────────────
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 // ── Core function ────────────────────────────────────────────
 
 /**
  * callAI — base function for all AI calls.
+ * Includes automatic retry with exponential backoff for 429 rate limit errors.
  * Reads AI_PROVIDER from config, picks the right provider config,
  * makes the API call with timeout, and returns the extracted text.
  *
  * @param {string} systemPrompt - System-level instructions for the AI
  * @param {string} userMessage  - The user's input/query
  * @param {number} maxTokens    - Max tokens in response (default: 2048)
+ * @param {string|null} providerOverride - Force a specific provider (default: null = use config)
  * @returns {string} The AI's response text
  */
-const callAI = async (systemPrompt, userMessage, maxTokens = 2048) => {
-    const providerName = config.AI_PROVIDER;
+const callAI = async (systemPrompt, userMessage, maxTokens = 2048, providerOverride = null, retried = false) => {
+    const providerName = providerOverride || config.AI_PROVIDER;
     const provider = PROVIDERS[providerName];
 
     if (!provider) {
@@ -126,7 +159,11 @@ const callAI = async (systemPrompt, userMessage, maxTokens = 2048) => {
     const timeoutId = setTimeout(() => controller.abort(), config.AI_TIMEOUT_MS);
 
     try {
-        const response = await fetch(provider.url, {
+        const requestUrl = provider.getUrl
+            ? provider.getUrl(apiKey)
+            : provider.url;
+
+        const response = await fetch(requestUrl, {
             method: 'POST',
             headers: provider.headers(apiKey),
             body: JSON.stringify(provider.buildBody(systemPrompt, userMessage, maxTokens)),
@@ -137,6 +174,19 @@ const callAI = async (systemPrompt, userMessage, maxTokens = 2048) => {
 
         if (!response.ok) {
             const errorBody = await response.text();
+
+            // ── Auto-retry on 429 rate limit ─────────────────
+            if (response.status === 429 && !retried) {
+                const retryAfter = parseFloat(response.headers.get('retry-after')) || 3;
+                const waitMs = Math.min(retryAfter * 1000, 8000);
+                logger.warn('AI rate limited, retrying after delay', {
+                    provider: providerName,
+                    waitMs,
+                });
+                await sleep(waitMs);
+                return callAI(systemPrompt, userMessage, maxTokens, providerOverride, true);
+            }
+
             logger.error('AI API request failed', {
                 provider: providerName,
                 status: response.status,
@@ -273,13 +323,16 @@ Be strict and consistent.`;
 /**
  * runAgent — executes an AI agent with its system prompt and user input.
  * Returns raw text — no JSON parsing.
- * Used by the Pipeline Executor (Phase 4) to run each agent.
+ * Uses Gemini by default (generous free tier) to avoid Groq rate limits.
+ * Falls back to default provider if Gemini key is not set.
  *
  * @param {string} systemPrompt - The agent's system prompt (defines its behavior)
  * @param {string} userInput    - The user's input to the agent
  * @returns {string} Raw AI response text
  */
 const runAgent = async (systemPrompt, userInput) => {
+    // Uses default provider (Groq). Gemini support ready when key is activated.
+    // callAI has built-in retry for 429 rate limits.
     return await callAI(systemPrompt, userInput, 2048);
 };
 

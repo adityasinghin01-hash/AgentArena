@@ -370,6 +370,121 @@ Before calling prototype done — verify ALL of these:
 
 ---
 
+## 🟡 SECTION 1.5 — HACKATHON REBUILD (Vihaan 9.0)
+> Goal: Same 3 agents compete in ALL rounds. Cumulative scoring. 1 overall winner.
+> Stack: Groq (Llama 3.3 70B) for AI. Next.js 15 + Tailwind v4 + Framer Motion for frontend.
+
+---
+
+### Step 1a — Smart Agent Selection Service
+
+> ⚠️ **PRE-CHECK:** Before building, open `services/claudeService.js` and verify `callAI` is a named export. If not, add `module.exports.callAI = callAI` before proceeding.
+> **Status:** callAI is already exported ✅
+
+**New file:** `services/agentSelector.js`
+
+**Exports:** `selectAgentsForProblem(outcomeText)` → returns `Promise<Agent[3]>`
+
+**Algorithm:**
+1. Call `callAI()` → Groq picks 3 best categories for the problem
+2. For each category → `Agent.findOne({ category, isActive: true }).sort({ reliabilityScore: -1 })`
+3. Dedup by `_id`. Backfill if < 3 from other categories
+4. Fallback if Groq fails → top 3 by `reliabilityScore` from DB
+5. Throw `AppError(422)` if DB has < 3 active agents
+6. Return exactly 3 Agent documents
+
+---
+
+### Step 1b — Pipeline Controller Update
+
+**Modify:** `controllers/pipelineController.js`
+- Import `selectAgentsForProblem` from `services/agentSelector.js`
+- Remove old `getTopAgentsByCategory`, `inferCategory`, `KEYWORD_CATEGORY_MAP`
+- Call `selectAgentsForProblem(outcomeText)` → assign same 3 agents to ALL slots
+
+---
+
+### Step 1c — Audition Model Update
+
+**Modify:** `models/Audition.js`
+- Add `overallWinner: { type: ObjectId, ref: 'Agent' }`
+- Add `finalLeaderboard: [{ agentId, agentName, totalScore, slotScores: [{slot, score}] }]`
+- Remove `winner` field from `resultSchema`
+
+---
+
+### Step 1d — Audition Service Rewrite
+
+**Modify:** `services/auditionService.js`
+- Same 3 agents in every slot (round)
+- Track cumulative scores across rounds in a `scoreboard` object
+- Remove `slot_winner` SSE event
+- Add `round_complete` event after each round (cumulative leaderboard)
+- Add `overall_winner` event at end (final leaderboard + winner)
+- SSE event flow: `agent_output` → `agent_scores` → `round_complete` (per round) → `overall_winner` → `complete`
+
+---
+
+### Step 1e — Backend Testing
+
+> ⚠️ **PRE-CHECK:** First ping `GET /api/health` and wait for 200 before running SSE test. Render may be sleeping.
+
+- Test 1: "Review my code" → expect scanner/linter/explainer agents
+- Test 2: "Write 7 tweets" → expect writer/scheduler/researcher agents  
+- Test 3: Groq failure → fallback to top 3 by reliability
+- Test 4: SSE stream → same 3 agents every round, `round_complete` leaderboard, `overall_winner` at end, NO `slot_winner` events
+
+---
+
+### Step 2a — Next.js Frontend Scaffold
+
+**New folder:** `/frontend-next/`
+- Next.js 15 + TypeScript + Tailwind v4 + Framer Motion
+- Dark theme: bg `#0a0a0f`, primary purple `#7c3aed`, accent cyan `#06b6d4`
+- Font: Inter
+
+---
+
+### Step 2b — Login Page
+
+**Screen 1:** `/login`
+- Centered card with email/password inputs
+- Pre-filled: `seed@agentarena.dev` / `SeedAdmin@123`
+- JWT to localStorage → redirect to `/arena`
+
+---
+
+### Step 2c — Arena Page (MAIN SCREEN)
+
+**Screen 2:** `/arena`
+- Input + "⚔️ Fight" button + 3 quick demo buttons
+- On `/arena` mount → **silently ping `GET /api/health`** to wake Render
+- Click Fight → show **"Assembling your arena..." full-screen loader** until first SSE event
+- If `agent_output` missing for any agent after 30s → show **"Agent timed out this round"** in that lane
+- Fight UI: round indicator, 3 lanes side-by-side, live leaderboard panel, winner reveal
+
+---
+
+### Step 2d — Results Page (REQUIRED)
+
+**Screen 3:** `/results/:id`
+- Final leaderboard with all scores broken down by round
+- Agent-by-agent comparison charts
+- "Run Again" button
+
+---
+
+### Step 2e — End-to-End Test
+
+- Login → Arena → Fight → watch rounds → winner → Results page
+- Verify all 3 agents visible in every round
+- Verify leaderboard updates after each round
+- Verify winner animation + redirect to results
+
+---
+
+---
+
 ## 🟢 SECTION 2 — FINAL PRODUCT
 > Goal: Production-grade SaaS after hackathon.
 > Rule: Do NOT build any of this during the hackathon. This is post-launch scope.
