@@ -48,70 +48,56 @@ _(remaining screens to be filled)_
 
 ## USER PATH
 
-### 3a. User Login/Signup (`/login`)
-- **After**: Role selection → "I'm a User"
-- **Features**: Email + password login, signup tab/toggle
-- **On success**: → Arena page
+### 3a. ✅ User Login/Signup (`/login`, `/signup`, `/forgot-password`, `/reset-password`) — DONE
+- **Status**: Complete
+- **Components**: `SignIn.jsx`, `signup/page.jsx`, `forgot-password/page.jsx`, `reset-password/page.jsx`
+- **Features delivered**:
+  - Email + password login with reCAPTCHA
+  - Signup with email verification (Brevo)
+  - Google OAuth one-tap sign-in
+  - Forgot password → email with reset link (Brevo)
+  - Reset password page (token validation + new password)
+  - Role persistence (`PATCH /api/v1/user/role` — user/deployer)
+  - Role-based redirect (user → `/arena`, deployer → `/deployer`)
+  - JWT access + refresh tokens stored in localStorage
+  - Token refresh on 401 with retry
+  - reCAPTCHA on both login and signup
+  - CI test bypass with shared `TEST_RECAPTCHA_TOKEN` constant
 
-#### Backend Integration Tasks:
+### 4a. ✅ Arena (`/arena`) — DONE
+- **Status**: Complete
+- **Components**: `arena/page.jsx`, `Navbar.jsx`, `globals.css` (arena tokens)
+- **Features delivered**:
+  - Glassmorphism Navbar with user dropdown, active page glow
+  - Mode toggle: ⚡ Automatic / 🎯 Manual pill switch
+  - Large prompt textarea with focus glow + character count
+  - 6 prompt suggestion chips with hover effects
+  - AI decompose flow → shimmer loading → BattlePreview
+  - Round cards showing name + task from AI decomposition
+  - Agent grid with badge tiers, win rate bars, selection state
+  - Auto-select top agents in Auto mode
+  - Pipeline creation → redirect to `/battle/:id`
+  - State machine reducer (idle → decomposing → preview → launching)
+- **Skills used**: `@ui-ux-pro-max` `@dark-mode-ui` `@glassmorphism` `@frontend-developer` `@nextjs-patterns` `@react-best-practices` `@senior-fullstack` `@rest-api-design`
+- **API endpoints wired**: `POST /outcome/decompose`, `POST /pipeline/create`, `GET /agents`
 
-**Sign In button click:**
-1. `POST /api/v1/login` with `{ email, password, rememberMe }`
-2. On `200` → store `accessToken` + `refreshToken` in `localStorage`
-3. Store `user` object (`id`, `email`, `role`, `isVerified`) in `localStorage`
-4. Save `accountType` from `sessionStorage.selectedRole` → `PATCH /api/v1/user/role` _(new endpoint needed)_
-5. Redirect → `/arena`
-6. On `401` → show "Invalid credentials" error
-7. On `403` (unverified) → show "Please verify your email" message
-8. On `403` (locked) → show "Account temporarily locked" message
-
-**Sign Up button click (top-right):**
-1. Navigate → `/signup` (or toggle to signup form)
-2. `POST /api/v1/signup` with `{ email, password, source: "web" }`
-3. On `201` → show "Account created. Check your email to verify."
-4. Store tokens for auto-login after verification
-5. On `409` → show "Account already exists" error
-6. On `400` → show password validation errors
-
-**Continue with Google:**
-1. Trigger Google OAuth popup → get `idToken`
-2. `POST /api/v1/google-login` with `{ idToken }`
-3. On `200` → store tokens + user → redirect `/arena`
-4. On `404` → show "No account found. Please sign up first."
-
-**Forgot password?**
-1. Navigate → `/forgot-password` _(future screen)_
-2. `POST /api/v1/password/forgot` with `{ email }` (endpoint exists)
-
-**Remember me checkbox:**
-- Passed as `rememberMe: true` in login body
-- Backend issues longer-lived refresh token
-
-**Token refresh (background):**
-- On `401` from any API call → `POST /api/v1/refresh-token` with `{ refreshToken }`
-- Rotate both tokens, retry original request
-- On reuse detection → wipe all tokens → force re-login
-
-### 4a. Arena (`/arena`)
-- **Two modes**: Toggle between ⚡ Automatic and 🎯 Manual
-- **Automatic**: Type problem → AI picks best agents → preview shown → battle starts
-- **Manual**: Type problem → go to Agent Marketplace → pick 2-4 agents → come back → battle starts
-- **Prompt suggestions**: Quick-start buttons ("Review code", "Plan a trip", etc.)
-- **Battle Preview**: Before battle starts, shows:
-  - Rounds breakdown (from AI decompose)
-  - Agent cards with name, category, win rate, badge
-  - User confirms → battle begins
-- **Future additions**: Estimated time, recent battles sidebar, swap agent button
-
-### 5a. Battle Live (`/battle/:id`)
-- **Layout**: Side-by-side agent panels (2-4 columns based on agent count)
-- **Each panel**: Looks like a chatbot UI (like GPT/Claude/Gemini interface)
-  - Agent name + avatar + badge at top
-  - Output streams in with proper markdown rendering (code blocks, lists, bold, etc.)
-  - Typing indicator while agent is "thinking"
-- **Round-by-round**: One round at a time, all agents answer, then next round
-- **Live Leaderboard**: Persistent scoreboard showing cumulative scores, updates after each round
-- **After all rounds**: Winner announcement → link to results page
+### 5a. ✅ Battle Live (`/battle/:id`) — DONE
+- **Status**: Complete
+- **Components**: `battle/[id]/page.jsx`, `globals.css` (battle tokens)
+- **Features delivered**:
+  - Side-by-side agent panels (2-4 columns, auto-adapts to agent count)
+  - Chatbot-style UI per agent (avatar, name, score, output bubbles)
+  - Round-by-round progression with round labels
+  - Typing indicator (3-dot bounce) while agent is thinking
+  - Score badges per output (green/amber/red based on score)
+  - Live leaderboard sidebar with progress bars (updates per round)
+  - Gold-rank highlight for #1 position
+  - Winner announcement card with gold glow animation
+  - SSE stream parsing (agent_output → agent_scores → round_complete → overall_winner → complete)
+  - Auto-scroll to latest output
+  - Error/connecting states with shimmer loading
+  - "New Battle" CTA after completion
+- **Skills used**: `@ui-ux-pro-max` `@dark-mode-ui` `@glassmorphism` `@frontend-developer` `@react-best-practices` `@senior-fullstack` `@performance-optimization`
 
 ### 6a. Results (`/results/:id`)
 - **Final Leaderboard**: All agents ranked with cumulative scores

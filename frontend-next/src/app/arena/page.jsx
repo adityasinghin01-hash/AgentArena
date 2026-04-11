@@ -1,36 +1,154 @@
 'use client';
+// Screen 4a: Arena — The Competitive AI Playground
+// Skills: @frontend-developer @nextjs-patterns @react-best-practices @ui-ux-pro-max @dark-mode-ui @glassmorphism
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useReducer, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { getAccessToken, getUser, clearAuth, getRefreshToken } from '@/lib/auth';
-import { logoutUser } from '@/lib/api';
+import { getAccessToken, getUser } from '@/lib/auth';
+import { decomposeOutcome, createPipeline, fetchAgents } from '@/lib/api';
+import Navbar from '@/components/Navbar';
 
 const Beams = dynamic(() => import('@/components/Beams'), { ssr: false });
 
+// ── Prompt suggestion chips ──────────────────────────────────
+const SUGGESTIONS = [
+  { label: '🔍 Review my code', prompt: 'Review this Python function for bugs, performance issues, and best practices. Suggest improvements with code examples.' },
+  { label: '📋 Plan a strategy', prompt: 'Create a detailed marketing strategy for launching a new SaaS product targeting small businesses. Include channels, budget allocation, and timeline.' },
+  { label: '🐛 Debug this function', prompt: 'Debug this JavaScript authentication middleware that intermittently returns 401 errors for valid tokens. Find the root cause and fix it.' },
+  { label: '🧪 Write unit tests', prompt: 'Write comprehensive unit tests for a REST API user registration endpoint. Cover happy paths, edge cases, validation errors, and database failures.' },
+  { label: '⚡ Optimize SQL query', prompt: 'Optimize this SQL query that takes 12 seconds to execute on a table with 10M rows. Suggest indexes, query restructuring, and caching strategies.' },
+  { label: '🏗️ Design an API', prompt: 'Design a RESTful API for an e-commerce platform. Include endpoints for products, orders, users, and payments with proper HTTP methods and status codes.' },
+];
+
+// ── State machine ── @react-best-practices ───────────────────
+const INITIAL_STATE = {
+  phase: 'idle', // idle | decomposing | preview | launching
+  mode: 'auto',  // auto | manual
+  prompt: '',
+  slots: [],
+  agents: [],
+  selectedAgents: {},
+  error: null,
+};
+
+function arenaReducer(state, action) {
+  switch (action.type) {
+    case 'SET_PROMPT': return { ...state, prompt: action.payload, error: null };
+    case 'SET_MODE': return { ...state, mode: action.payload };
+    case 'START_DECOMPOSE': return { ...state, phase: 'decomposing', error: null };
+    case 'DECOMPOSE_SUCCESS': return { ...state, phase: 'preview', slots: action.payload.slots, agents: action.payload.agents };
+    case 'DECOMPOSE_ERROR': return { ...state, phase: 'idle', error: action.payload };
+    case 'SELECT_AGENT': {
+      const { slotIdx, agentId } = action.payload;
+      const current = state.selectedAgents[slotIdx] || [];
+      const exists = current.includes(agentId);
+      return {
+        ...state,
+        selectedAgents: {
+          ...state.selectedAgents,
+          [slotIdx]: exists ? current.filter(id => id !== agentId) : [...current, agentId],
+        },
+      };
+    }
+    case 'START_LAUNCH': return { ...state, phase: 'launching' };
+    case 'LAUNCH_ERROR': return { ...state, phase: 'preview', error: action.payload };
+    case 'RESET': return { ...INITIAL_STATE };
+    default: return state;
+  }
+}
+
+// ── Badge tier icon ──────────────────────────────────────────
+function badgeIcon(tier) {
+  const icons = { unverified: '○', tested: '◉', verified: '🏅', elite: '👑' };
+  return icons[tier] || '○';
+}
+
+function winRateClass(rate) {
+  if (rate >= 60) return 'win-high';
+  if (rate >= 40) return 'win-mid';
+  return 'win-low';
+}
+
 export default function ArenaPage() {
   const router = useRouter();
-  const [user, setUser] = useState(null);
+  const [state, dispatch] = useReducer(arenaReducer, INITIAL_STATE);
   const [loading, setLoading] = useState(true);
 
+  // ── Auth guard ──
   useEffect(() => {
-    const token = getAccessToken();
-    if (!token) {
-      router.replace('/login');
-      return;
-    }
-    setUser(getUser());
+    if (!getAccessToken()) { router.replace('/login'); return; }
     setLoading(false);
   }, [router]);
 
-  const handleLogout = async () => {
-    const refreshToken = getRefreshToken();
-    if (refreshToken) {
-      try { await logoutUser(refreshToken); } catch { /* logout even if API fails */ }
+  // ── Decompose prompt ── @senior-fullstack ──────────────────
+  const handleLaunch = useCallback(async () => {
+    if (state.prompt.trim().length < 10) {
+      dispatch({ type: 'DECOMPOSE_ERROR', payload: 'Prompt must be at least 10 characters.' });
+      return;
     }
-    clearAuth();
-    router.replace('/login');
-  };
+    dispatch({ type: 'START_DECOMPOSE' });
+    try {
+      const [decomposeRes, agentsRes] = await Promise.all([
+        decomposeOutcome(state.prompt),
+        fetchAgents(),
+      ]);
+      const slots = decomposeRes.data?.slots || decomposeRes.slots || [];
+      const agents = agentsRes.data?.agents || agentsRes.agents || [];
+
+      // Auto-mode: pre-assign top agents to each slot
+      if (state.mode === 'auto' && agents.length > 0) {
+        const sorted = [...agents].sort((a, b) => (b.reliabilityScore || 0) - (a.reliabilityScore || 0));
+        const autoSelected = {};
+        slots.forEach((_, idx) => {
+          // Pick top 3 agents per slot (or fewer if not enough)
+          autoSelected[idx] = sorted.slice(0, Math.min(3, sorted.length)).map(a => a._id);
+        });
+        dispatch({ type: 'DECOMPOSE_SUCCESS', payload: { slots, agents } });
+        // Set auto-selected agents
+        slots.forEach((_, idx) => {
+          sorted.slice(0, Math.min(3, sorted.length)).forEach(a => {
+            dispatch({ type: 'SELECT_AGENT', payload: { slotIdx: idx, agentId: a._id } });
+          });
+        });
+      } else {
+        dispatch({ type: 'DECOMPOSE_SUCCESS', payload: { slots, agents } });
+      }
+    } catch (err) {
+      dispatch({ type: 'DECOMPOSE_ERROR', payload: err.message || 'Failed to analyze prompt.' });
+    }
+  }, [state.prompt, state.mode]);
+
+  // ── Start battle ── @senior-fullstack ──────────────────────
+  const handleStartBattle = useCallback(async () => {
+    dispatch({ type: 'START_LAUNCH' });
+    try {
+      // Build slots with assigned agents
+      const slotsWithAgents = state.slots.map((slot, idx) => ({
+        name: slot.name,
+        task: slot.task,
+        evaluationCriteria: slot.evaluationCriteria || slot.evaluation_criteria || '',
+        assignedAgents: state.selectedAgents[idx] || [],
+      }));
+
+      // Check all slots have agents
+      const empty = slotsWithAgents.filter(s => s.assignedAgents.length === 0);
+      if (empty.length > 0) {
+        dispatch({ type: 'LAUNCH_ERROR', payload: `Select agents for: ${empty.map(s => s.name).join(', ')}` });
+        return;
+      }
+
+      const pipeline = await createPipeline({
+        outcomeText: state.prompt,
+        slots: slotsWithAgents,
+      });
+
+      const pipelineId = pipeline.data?._id || pipeline._id;
+      router.push(`/battle/${pipelineId}?input=${encodeURIComponent(state.prompt)}`);
+    } catch (err) {
+      dispatch({ type: 'LAUNCH_ERROR', payload: err.message || 'Failed to start battle.' });
+    }
+  }, [state.slots, state.selectedAgents, state.prompt, router]);
 
   if (loading) {
     return (
@@ -47,52 +165,234 @@ export default function ArenaPage() {
       </div>
       <div className="noise-overlay"></div>
 
-      <main className="relative z-10 flex min-h-screen w-full flex-col items-center justify-center px-6">
-        <div className="flex w-full max-w-[600px] animate-in fade-in slide-in-from-bottom-8 duration-1000 flex-col items-center text-center">
+      <Navbar />
 
-          {/* Status Badge */}
-          <div className="mb-8 flex items-center gap-2 rounded-full border border-green-500/20 bg-green-500/5 px-4 py-2">
-            <div className="h-2 w-2 rounded-full bg-green-400 animate-pulse" />
-            <span className="font-body text-xs text-green-400 tracking-wide">AUTHENTICATED</span>
-          </div>
+      <main className="relative z-10 flex min-h-screen w-full flex-col items-center px-6 pt-[80px] pb-12">
+        <div className="w-full max-w-[720px] animate-in fade-in slide-in-from-bottom-8 duration-1000 flex flex-col items-center">
 
-          <h1 className="text-glow font-headline text-5xl font-bold tracking-tight text-white md:text-6xl mb-4">
+          {/* ── Header ── */}
+          <h1 className="text-glow font-serif text-5xl md:text-6xl italic font-bold tracking-tight text-white mb-2">
             Arena
           </h1>
-
-          <p className="font-body text-lg text-white/50 mb-2">
-            Demo placeholder — testing auth flow
+          <p className="font-body text-sm text-white/40 mb-10 text-center">
+            Describe your challenge and watch AI agents compete to solve it.
           </p>
 
-          {/* User Info Card */}
-          <div className="mt-8 w-full max-w-[400px] rounded-xl border border-white/10 bg-white/[0.02] p-6 text-left">
-            <p className="text-[10px] font-bold tracking-[0.2em] text-[#888] uppercase mb-3">Logged in as</p>
-            <p className="font-body text-white text-lg font-medium">{user?.email || '—'}</p>
-            <div className="mt-4 flex gap-4 text-xs text-white/30">
-              <span>ID: {user?.id?.slice(-8) || '—'}</span>
-              <span>Role: {user?.role || '—'}</span>
-              <span>Verified: {user?.isVerified ? '✓' : '✗'}</span>
+          {/* ── Mode Toggle ── @ui-ux-pro-max ── */}
+          <div className="mode-toggle mb-6">
+            <button
+              className={`mode-toggle-btn${state.mode === 'auto' ? ' active' : ''}`}
+              onClick={() => dispatch({ type: 'SET_MODE', payload: 'auto' })}
+            >
+              ⚡ Automatic
+            </button>
+            <button
+              className={`mode-toggle-btn${state.mode === 'manual' ? ' active' : ''}`}
+              onClick={() => dispatch({ type: 'SET_MODE', payload: 'manual' })}
+            >
+              🎯 Manual
+            </button>
+          </div>
+
+          {/* ── Prompt Input ── */}
+          <div className="w-full relative">
+            <textarea
+              className="arena-textarea"
+              placeholder="What do you want AI agents to solve?"
+              value={state.prompt}
+              onChange={(e) => dispatch({ type: 'SET_PROMPT', payload: e.target.value })}
+              disabled={state.phase !== 'idle'}
+              rows={4}
+            />
+            <div className="flex justify-between items-center mt-2 px-1">
+              <span className="text-xs" style={{ color: state.prompt.length < 10 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.4)' }}>
+                {state.prompt.length} characters
+              </span>
+              <span className="text-xs text-white/20">
+                {state.mode === 'auto' ? 'AI picks best agents' : 'You pick the agents'}
+              </span>
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="mt-10 flex gap-4">
-            <button
-              onClick={handleLogout}
-              className="flex items-center gap-2 rounded-full border border-red-500/20 bg-red-500/5 px-6 py-3 text-sm font-body text-red-400 hover:bg-red-500/10 hover:border-red-500/40 transition-all"
-            >
-              <span className="material-symbols-outlined text-base">logout</span>
-              Logout
-            </button>
+          {/* ── Suggestion Chips ── */}
+          {state.phase === 'idle' && (
+            <div className="flex flex-wrap gap-2 mt-5 justify-center">
+              {SUGGESTIONS.map((s) => (
+                <button
+                  key={s.label}
+                  className="prompt-chip"
+                  onClick={() => dispatch({ type: 'SET_PROMPT', payload: s.prompt })}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          )}
 
+          {/* ── Error Message ── */}
+          {state.error && (
+            <div className="mt-4 w-full rounded-xl border border-red-500/20 bg-red-500/5 p-4 text-center">
+              <p className="text-sm text-red-400">{state.error}</p>
+            </div>
+          )}
+
+          {/* ── Launch / Decomposing ── */}
+          {state.phase === 'idle' && (
             <button
-              onClick={() => router.push('/')}
-              className="flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.02] px-6 py-3 text-sm font-body text-white/50 hover:text-white hover:border-white/20 transition-all"
+              className="glow-button group mt-8 h-12 transition-transform active:scale-95"
+              style={{ borderRadius: 999 }}
+              disabled={state.prompt.trim().length < 10}
+              onClick={handleLaunch}
             >
-              <span className="material-symbols-outlined text-base">home</span>
-              Home
+              <div className="glow-button-track" style={{ borderRadius: 999 }}></div>
+              <div className="glow-button-inner px-10" style={{ borderRadius: 999 }}>
+                <span className="font-headline text-xs font-bold tracking-widest text-black uppercase transition-colors group-hover:text-white">
+                  ⚡ Launch Battle
+                </span>
+              </div>
             </button>
-          </div>
+          )}
+
+          {state.phase === 'decomposing' && (
+            <div className="mt-8 flex flex-col items-center gap-4">
+              <div className="shimmer" style={{ width: 280, height: 40 }}></div>
+              <div className="shimmer" style={{ width: 320, height: 80 }}></div>
+              <div className="shimmer" style={{ width: 240, height: 40 }}></div>
+              <p className="text-white/30 text-xs mt-2 font-body">Analyzing your challenge with AI...</p>
+            </div>
+          )}
+
+          {/* ── Battle Preview ── @glassmorphism ── */}
+          {(state.phase === 'preview' || state.phase === 'launching') && (
+            <div className="battle-preview-enter w-full mt-8">
+              {/* Rounds */}
+              <div className="mb-6">
+                <h3 className="text-[10px] font-bold tracking-[0.2em] text-[#888] uppercase mb-3">
+                  ⚔️ Battle Rounds ({state.slots.length})
+                </h3>
+                <div className="flex flex-col gap-2">
+                  {state.slots.map((slot, i) => (
+                    <div key={i} className="round-card">
+                      <div className="flex items-center gap-3 mb-1">
+                        <span className="text-xs font-bold text-white/30">R{i + 1}</span>
+                        <span className="text-sm font-medium text-white">{slot.name}</span>
+                      </div>
+                      <p className="text-xs text-white/40 leading-relaxed">{slot.task}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Agents — @react-best-practices @ui-ux-pro-max */}
+              <div className="mb-6">
+                <h3 className="text-[10px] font-bold tracking-[0.2em] text-[#888] uppercase mb-3">
+                  {state.mode === 'auto'
+                    ? '🤖 AI-Selected Agents (Top 3)'
+                    : `🤖 Select Agents (${state.agents.length} available)`}
+                </h3>
+
+                {/* AUTO MODE — show only top 3, no interaction */}
+                {state.mode === 'auto' && (
+                  <div className="grid grid-cols-3 gap-3">
+                    {(() => {
+                      const selectedIds = Object.values(state.selectedAgents).flat();
+                      const uniqueIds = [...new Set(selectedIds)];
+                      const top3 = uniqueIds.slice(0, 3).map(id => state.agents.find(a => a._id === id)).filter(Boolean);
+                      return top3.map((agent, idx) => (
+                        <div key={agent._id} className="agent-card selected" style={{ cursor: 'default' }}>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="text-sm">{['🥇', '🥈', '🥉'][idx]}</span>
+                            <span className="text-sm font-medium text-white truncate">{agent.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[10px] uppercase tracking-wider text-white/30 bg-white/[0.04] px-2 py-0.5 rounded-full">
+                              {agent.category}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className={`text-xs font-medium ${winRateClass(agent.winRate || 0)}`}>
+                              {agent.winRate || 0}% win
+                            </span>
+                            <span className="text-xs text-white/20">
+                              {agent.totalAuditions || 0} battles
+                            </span>
+                          </div>
+                        </div>
+                      ));
+                    })()}
+                  </div>
+                )}
+
+                {/* MANUAL MODE — show all agents, user picks */}
+                {state.mode === 'manual' && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                    {state.agents.map((agent) => {
+                      const isSelected = Object.values(state.selectedAgents).some(arr => arr.includes(agent._id));
+                      return (
+                        <div
+                          key={agent._id}
+                          className={`agent-card${isSelected ? ' selected' : ''}`}
+                          onClick={() => {
+                            state.slots.forEach((_, idx) => {
+                              dispatch({ type: 'SELECT_AGENT', payload: { slotIdx: idx, agentId: agent._id } });
+                            });
+                          }}
+                        >
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className={`badge-${agent.badgeTier || 'unverified'} text-sm`}>
+                              {badgeIcon(agent.badgeTier)}
+                            </span>
+                            <span className="text-sm font-medium text-white truncate">{agent.name}</span>
+                          </div>
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-[10px] uppercase tracking-wider text-white/30 bg-white/[0.04] px-2 py-0.5 rounded-full">
+                              {agent.category}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className={`text-xs font-medium ${winRateClass(agent.winRate || 0)}`}>
+                              {agent.winRate || 0}% win
+                            </span>
+                            <span className="text-xs text-white/20">
+                              {agent.totalAuditions || 0} battles
+                            </span>
+                          </div>
+                          {isSelected && (
+                            <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-[#7c3aed] flex items-center justify-center">
+                              <span className="text-white text-xs">✓</span>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-between">
+                <button
+                  className="text-xs text-white/30 hover:text-white/60 transition-colors"
+                  onClick={() => dispatch({ type: 'RESET' })}
+                >
+                  ← Start Over
+                </button>
+                <button
+                  className="glow-button group h-12 transition-transform active:scale-95"
+                  style={{ borderRadius: 999 }}
+                  onClick={handleStartBattle}
+                  disabled={state.phase === 'launching'}
+                >
+                  <div className="glow-button-track" style={{ borderRadius: 999 }}></div>
+                  <div className="glow-button-inner px-10" style={{ borderRadius: 999 }}>
+                    <span className="font-headline text-xs font-bold tracking-widest text-black uppercase transition-colors group-hover:text-white">
+                      {state.phase === 'launching' ? '⏳ Starting...' : '⚔️ Start Battle'}
+                    </span>
+                  </div>
+                </button>
+              </div>
+            </div>
+          )}
 
         </div>
       </main>

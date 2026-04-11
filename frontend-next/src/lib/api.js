@@ -120,3 +120,46 @@ export async function updateRole(role) {
     body: JSON.stringify({ role }),
   });
 }
+
+// ── Arena endpoints ── @rest-api-design ─────────────────────
+
+export async function decomposeOutcome(outcomeText) {
+  return requestWithAuth('/outcome/decompose', {
+    method: 'POST',
+    body: JSON.stringify({ outcomeText }),
+  });
+}
+
+export async function createPipeline(payload) {
+  // payload: { outcomeText, slots: [{ name, task, evaluationCriteria, assignedAgents }] }
+  return requestWithAuth('/pipeline/create', {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchAgents(params = {}) {
+  const query = new URLSearchParams(params).toString();
+  return requestWithAuth(`/agents${query ? `?${query}` : ''}`);
+}
+
+export async function getAgentById(id) {
+  return requestWithAuth(`/agents/${id}`);
+}
+
+// SSE stream — returns EventSource-like object
+export function startAudition(pipelineId, userInput) {
+  const BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5003/api/v1';
+  const { getAccessToken } = require('@/lib/auth');
+  const token = getAccessToken();
+
+  // Use fetch for SSE since EventSource can't send POST body
+  return fetch(`${BASE}/audition/run/${pipelineId}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ userInput }),
+  });
+}
