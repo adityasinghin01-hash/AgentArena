@@ -4,6 +4,7 @@
 
 require('dotenv').config();
 const request = require('supertest');
+const { TEST_RECAPTCHA_TOKEN } = require('./helpers');
 const mongoose = require('mongoose');
 const claudeService = require('../services/claudeService');
 
@@ -48,7 +49,7 @@ beforeAll(async () => {
 
   const loginRes = await request(app)
     .post('/api/v1/login')
-    .send({ email: TEST_USER.email, password: TEST_USER.password, recaptchaToken: 'dev-bypass' });
+    .send({ email: TEST_USER.email, password: TEST_USER.password, recaptchaToken: TEST_RECAPTCHA_TOKEN });
 
   expect(loginRes.status).toBe(200);
   token = loginRes.body.accessToken;

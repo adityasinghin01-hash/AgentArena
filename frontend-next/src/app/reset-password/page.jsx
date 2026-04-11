@@ -48,7 +48,7 @@ function ResetPasswordForm() {
       const res = await fetch(`${BASE_URL}/password/reset`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, newPassword: password }),
+        body: JSON.stringify({ token, newPassword: password, confirmPassword: password }),
       });
       const data = await res.json();
 
