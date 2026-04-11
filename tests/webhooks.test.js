@@ -53,7 +53,11 @@ beforeAll(async () => {
   // Login to get a JWT token
   const loginRes = await request(app)
     .post('/api/v1/login')
+
     .send({ email: TEST_USER.email, password: TEST_USER.password, recaptchaToken: TEST_RECAPTCHA_TOKEN });
+
+    .send({ email: TEST_USER.email, password: TEST_USER.password, recaptchaToken: 'dev-bypass' });
+
 
   expect(loginRes.status).toBe(200);
   expect(loginRes.body.accessToken).toBeDefined();

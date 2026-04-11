@@ -47,7 +47,10 @@ beforeAll(async () => {
 
   const loginRes = await request(app)
     .post('/api/v1/login')
+
     .send({ email: TEST_USER.email, password: TEST_USER.password, recaptchaToken: TEST_RECAPTCHA_TOKEN });
+
+    .send({ email: TEST_USER.email, password: TEST_USER.password, recaptchaToken: 'dev-bypass' });
 
   token = loginRes.body.accessToken;
 });
