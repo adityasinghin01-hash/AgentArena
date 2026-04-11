@@ -1,41 +1,185 @@
 @import "tailwindcss";
 
-@theme inline {
-  --color-background: #0a0a0f;
-  --color-foreground: #ffffff;
-  
-  --color-primary: #7c3aed; /* Purple 600 */
-  --color-primary-hover: #6d28d9; /* Purple 700 */
-  
-  --color-accent: #06b6d4; /* Cyan 500 */
-  --color-accent-hover: #0891b2; /* Cyan 600 */
-  
-  --color-surface: #12121a;
-  --color-surface-hover: #1c1c26;
-  --color-border: #2a2a3b;
-
-  --font-sans: var(--font-inter);
-}
-
+/* ─── Design Tokens ─────────────────────────────────────────── */
 :root {
-  color-scheme: dark;
+  --color-surface: #0a0a0f;
+  --color-on-surface: #ffffff;
+  --color-on-surface-variant: rgba(255, 255, 255, 0.55);
+  --color-primary: #7c3aed;
+  --color-accent: #06b6d4;
 }
 
+/* ─── Base Reset ────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
 body {
-  background-color: var(--color-background);
-  color: var(--color-foreground);
-  font-family: var(--font-sans), sans-serif;
+  margin: 0;
+  padding: 0;
+  background: var(--color-surface);
+  color: var(--color-on-surface);
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Base custom utility classes we might need for glow effects */
-@layer utilities {
-  .glow-primary {
-    box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+/* ─── Typography Utilities ──────────────────────────────────── */
+.font-headline {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.font-body {
+  font-family: 'Inter', system-ui, sans-serif;
+}
+
+.font-serif {
+  font-family: 'Playfair Display', Georgia, serif;
+}
+
+/* ─── Color Utilities ───────────────────────────────────────── */
+.bg-surface {
+  background-color: var(--color-surface);
+}
+
+.text-on-surface-variant {
+  color: var(--color-on-surface-variant);
+}
+
+/* ─── Text Glow ─────────────────────────────────────────────── */
+.text-glow {
+  text-shadow:
+    0 0 20px rgba(255, 255, 255, 0.15),
+    0 0 60px rgba(255, 255, 255, 0.05),
+    0 0 100px rgba(255, 255, 255, 0.02);
+}
+
+/* ─── Noise Overlay ─────────────────────────────────────────── */
+.noise-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 256px 256px;
+}
+
+/* ─── Entrance Animations ───────────────────────────────────── */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
   }
-  .glow-accent {
-    box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+  to {
+    opacity: 1;
   }
-  .glow-red {
-    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+}
+
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(2rem);
   }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-in {
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation: fadeIn var(--animation-duration, 1s) ease-out;
+}
+
+.slide-in-from-bottom-8 {
+  animation: fadeIn var(--animation-duration, 1s) ease-out,
+             slideInFromBottom var(--animation-duration, 1s) ease-out;
+}
+
+.duration-1000 {
+  --animation-duration: 1s;
+}
+
+/* ─── Glow Button ───────────────────────────────────────────── */
+.glow-button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  overflow: hidden;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  background: transparent;
+}
+
+.glow-button-track {
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from 0deg,
+    #ffffff 0%,
+    #a78bfa 25%,
+    #06b6d4 50%,
+    #a78bfa 75%,
+    #ffffff 100%
+  );
+  animation: glow-spin 3s linear infinite;
+}
+
+@keyframes glow-spin {
+  from {
+    transform: rotate(0deg) scale(1.5);
+  }
+  to {
+    transform: rotate(360deg) scale(1.5);
+  }
+}
+
+.glow-button-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: calc(100% - 2px);
+  height: calc(100% - 2px);
+  margin: 1px;
+  border-radius: 9999px;
+  background: #ffffff;
+  transition: background 0.3s ease;
+}
+
+.glow-button:hover .glow-button-inner {
+  background: rgba(0, 0, 0, 0.85);
+}
+
+/* ─── Material Symbols ──────────────────────────────────────── */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hide reCAPTCHA test-mode red banner */
+.rc-anchor-alert, .rc-anchor-over-quota-alert {
+  display: none !important;
 }

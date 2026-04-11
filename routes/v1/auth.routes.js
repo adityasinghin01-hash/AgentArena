@@ -13,7 +13,7 @@ const { schemas } = require('../../middleware/validate');
 router.post('/signup', strictLimiter, schemas.signup, verifyRecaptcha, authController.signup);
 
 // POST /api/v1/login
-router.post('/login', authLimiter, schemas.login, authController.login);
+router.post('/login', authLimiter, schemas.login, verifyRecaptcha, authController.login);
 
 // POST /api/v1/google-login — no per-route limiter (global only)
 router.post('/google-login', authController.googleLogin);
