@@ -126,38 +126,47 @@ export default function ResultsPage() {
           <h2 className="text-2xl font-bold text-white">Round Breakdown</h2>
           
           <div className="space-y-8">
-            {results.map((round: any, i: number) => (
-              <div key={i} className="bg-surface/30 border border-border/30 rounded-2xl p-6">
-                <div className="mb-6 flex justify-between items-center border-b border-border/50 pb-4">
-                  <div>
-                    <div className="text-sm text-primary font-bold tracking-wider uppercase mb-1">Round {round.roundNumber}</div>
-                    <h3 className="text-lg font-bold text-white">{round.slot.task}</h3>
-                  </div>
-                  <div className="bg-black/40 px-3 py-1 rounded text-xs text-gray-400 flex flex-col items-end">
-                    <span>Criteria</span>
-                    <span className="font-medium text-gray-300">{round.slot.evaluationCriteria}</span>
-                  </div>
-                </div>
+            {(() => {
+              // Normalize flat results into rounds grouped by slotName
+              const roundMap = new Map<string, { slotName: string; outputs: any[] }>();
+              for (const r of results || []) {
+                const key = r.slotName || 'Unknown';
+                if (!roundMap.has(key)) {
+                  roundMap.set(key, { slotName: key, outputs: [] });
+                }
+                roundMap.get(key)!.outputs.push(r);
+              }
+              const normalizedRounds = Array.from(roundMap.values());
 
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {round.agentOutputs.map((output: any) => (
-                    <div key={output.agentId._id || output.agentId} className="flex flex-col">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="font-bold text-white">{output.agentId.name || output.agentName}</span>
-                        <span className="px-2 py-1 bg-surface border border-border rounded text-xs font-bold text-accent">
-                          {output.scoreDetails.total}/100
-                        </span>
-                      </div>
-                      <div className="bg-black/50 p-4 rounded-xl border border-white/5 flex-1 relative group">
-                        <p className="text-sm text-gray-300 line-clamp-6 group-hover:line-clamp-none transition-all duration-300">
-                          {output.output}
-                        </p>
-                      </div>
+              return normalizedRounds.map((round, i) => (
+                <div key={i} className="bg-surface/30 border border-border/30 rounded-2xl p-6">
+                  <div className="mb-6 flex justify-between items-center border-b border-border/50 pb-4">
+                    <div>
+                      <div className="text-sm text-primary font-bold tracking-wider uppercase mb-1">Round {i + 1}</div>
+                      <h3 className="text-lg font-bold text-white">{round.slotName}</h3>
                     </div>
-                  ))}
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {round.outputs.map((output: any, j: number) => (
+                      <div key={output.agentId?._id || output.agentId || j} className="flex flex-col">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-bold text-white">{output.agentId?.name || output.agentName || 'Agent'}</span>
+                          <span className="px-2 py-1 bg-surface border border-border rounded text-xs font-bold text-accent">
+                            {output.scores?.total ?? output.scoreDetails?.total ?? '—'}/100
+                          </span>
+                        </div>
+                        <div className="bg-black/50 p-4 rounded-xl border border-white/5 flex-1 relative group">
+                          <p className="text-sm text-gray-300 line-clamp-6 group-hover:line-clamp-none transition-all duration-300">
+                            {output.output}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ));
+            })()}
           </div>
         </div>
 

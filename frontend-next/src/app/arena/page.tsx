@@ -75,12 +75,13 @@ export default function ArenaPage() {
         body: JSON.stringify({ outcomeText: userInput, slots }),
       });
       if (!pipeRes.ok) throw new Error("Failed to assemble pipeline agents.");
-      const { data: pipeline } = await pipeRes.json();
+      const pipeJson = await pipeRes.json();
+      const pipelineId = pipeJson.data.pipelineId;
       
-      setPipelineId(pipeline._id);
+      setPipelineId(pipelineId);
       
       // Step 3: Start SSE Audition
-      startAudition(pipeline._id);
+      startAudition(pipelineId);
     } catch (err: any) {
       setErrorMessage(err.message);
       setStatus("error");
@@ -104,6 +105,18 @@ export default function ArenaPage() {
         },
         body: JSON.stringify({ userInput }),
       });
+
+      if (!response.ok) {
+        const errBody = await response.text();
+        let msg = "Audition request failed";
+        try { msg = JSON.parse(errBody).message || msg; } catch (_e) { /* not JSON */ }
+        throw new Error(msg);
+      }
+
+      const contentType = response.headers.get("content-type") || "";
+      if (!contentType.includes("text/event-stream") && !response.body) {
+        throw new Error("Expected SSE stream but got: " + contentType);
+      }
 
       if (!response.body) throw new Error("No response body");
 

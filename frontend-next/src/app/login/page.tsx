@@ -30,7 +30,11 @@ export default function LoginPage() {
         throw new Error(data.message || "Failed to login");
       }
       
-      localStorage.setItem("userToken", data.token);
+      if (!data.accessToken) {
+        throw new Error("No access token received");
+      }
+      
+      localStorage.setItem("userToken", data.accessToken);
       router.push("/arena");
     } catch (err: any) {
       setError(err.message);
