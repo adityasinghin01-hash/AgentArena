@@ -35,15 +35,26 @@ const pickCategories = async (outcomeText) => {
         throw new Error(`Expected array of 3, got: ${JSON.stringify(parsed)}`);
     }
 
-    // Validate each category is in the allowed list
-    const validated = parsed.map((cat) => {
+    // Validate and deduplicate categories
+    const seen = new Set();
+    const validated = [];
+    for (const cat of parsed) {
         const lower = String(cat).toLowerCase().trim();
         if (!VALID_CATEGORIES.includes(lower)) {
-            logger.warn('agentSelector: invalid category from AI, will backfill', { category: cat });
-            return null;
+            logger.warn('agentSelector: invalid category from AI, skipping', { category: cat });
+            continue;
         }
-        return lower;
-    });
+        if (seen.has(lower)) {
+            logger.warn('agentSelector: duplicate category from AI, skipping', { category: lower });
+            continue;
+        }
+        seen.add(lower);
+        validated.push(lower);
+    }
+
+    if (validated.length === 0) {
+        throw new Error('No valid categories returned by AI');
+    }
 
     return validated;
 };
