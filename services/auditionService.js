@@ -295,7 +295,9 @@ const runAudition = async (pipeline, userInput, sseCallback) => {
             totalResponseTimeMs: data.totalResponseTimeMs,
         }))
         .sort((a, b) => {
-            if (b.totalScore !== a.totalScore) {return b.totalScore - a.totalScore;}
+            if (b.totalScore !== a.totalScore) {
+                return b.totalScore - a.totalScore;
+            }
             if (a.totalResponseTimeMs !== b.totalResponseTimeMs) {
                 return a.totalResponseTimeMs - b.totalResponseTimeMs;
             }
@@ -303,13 +305,6 @@ const runAudition = async (pipeline, userInput, sseCallback) => {
         });
 
     const winner = finalLeaderboard[0];
-
-    sseCallback({
-        event: 'overall_winner',
-        winnerId: winner.agentId,
-        winnerName: winner.agentName,
-        finalLeaderboard: finalLeaderboard.map(({ totalResponseTimeMs: _totalResponseTimeMs, ...rest }) => rest),
-    });
 
     // ── 6. Save Audition to DB ───────────────────────────────
     const audition = await Audition.create({
@@ -319,7 +314,15 @@ const runAudition = async (pipeline, userInput, sseCallback) => {
         results: allResults,
         status: 'complete',
         overallWinner: winner.agentId,
-        finalLeaderboard: finalLeaderboard.map(({ totalResponseTimeMs: _totalResponseTimeMs, ...rest }) => rest),
+        finalLeaderboard: finalLeaderboard.map(({ totalResponseTimeMs: _, ...rest }) => rest),
+    });
+
+    sseCallback({
+        event: 'overall_winner',
+        winnerId: winner.agentId,
+        winnerName: winner.agentName,
+        auditionId: audition._id,
+        finalLeaderboard: finalLeaderboard.map(({ totalResponseTimeMs: _, ...rest }) => rest),
     });
 
     // ── 7. Update pipeline status ────────────────────────────

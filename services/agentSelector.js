@@ -6,14 +6,12 @@
 
 const { callAI } = require('./claudeService');
 const Agent = require('../models/Agent');
+const { CATEGORIES } = require('../models/Agent');
 const AppError = require('../utils/AppError');
 const logger = require('../config/logger');
 
-// Valid categories — must match Agent.CATEGORIES
-const VALID_CATEGORIES = [
-    'classifier', 'writer', 'ranker', 'researcher',
-    'scheduler', 'linter', 'scanner', 'explainer', 'analyzer',
-];
+// Use canonical categories from Agent model (includes 'other')
+const VALID_CATEGORIES = CATEGORIES;
 
 /**
  * Asks Groq to pick the 3 best agent categories for a problem.
@@ -23,7 +21,7 @@ const VALID_CATEGORIES = [
 const pickCategories = async (outcomeText) => {
     const systemPrompt = `You are an agent selector. Given a user's problem, return exactly 3 agent categories that would best solve it. Choose ONLY from: ${VALID_CATEGORIES.join(', ')}. Return ONLY a raw JSON array of 3 strings. No explanation. No markdown. No backticks. Example: ["scanner","linter","explainer"]`;
 
-    const raw = await callAI(systemPrompt, outcomeText, 256);
+    const raw = await callAI(systemPrompt, outcomeText, 256, 'groq');
 
     // Strip any accidental code fences
     const cleaned = raw
@@ -55,7 +53,9 @@ const pickCategories = async (outcomeText) => {
  * Returns the Agent document or null if none found.
  */
 const getBestAgentForCategory = async (category) => {
-    if (!category) {return null;}
+    if (!category) {
+        return null;
+    }
     return Agent.findOne({ category, isActive: true })
         .sort({ reliabilityScore: -1, createdAt: -1 });
 };
