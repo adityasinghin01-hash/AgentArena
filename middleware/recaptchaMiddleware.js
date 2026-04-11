@@ -7,8 +7,8 @@ const config = require('../config/config');
 const verifyRecaptcha = async (req, res, next) => {
     const { recaptchaToken } = req.body;
 
-    // Dev bypass — only works in development, only with exact magic string
-    if (config.NODE_ENV === 'development' && recaptchaToken === 'dev-bypass') {
+    // Dev/Test bypass — only works in development or test, only with exact magic string
+    if ((config.NODE_ENV === 'development' || config.NODE_ENV === 'test') && recaptchaToken === 'dev-bypass') {
         return next();
     }
 
