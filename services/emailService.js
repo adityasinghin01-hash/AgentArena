@@ -53,7 +53,7 @@ const sendVerificationEmail = async (email, rawToken, source = 'app') => {
 
 // ── Password Reset Email ─────────────────────────────────
 const sendPasswordResetEmail = async (email, rawToken) => {
-  const resetUrl = `myapp://reset-password?token=${rawToken}`;
+  const resetUrl = `${config.CLIENT_URL}/reset-password?token=${rawToken}`;
   await sendEmail({
     to: email,
     subject: 'Password Reset Request',
