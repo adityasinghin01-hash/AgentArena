@@ -2,92 +2,9 @@
 // Handles pipeline CRUD — create from decomposed slots, fetch by id, list user's pipelines.
 
 const Pipeline = require('../models/Pipeline');
-const Agent = require('../models/Agent');
 const AppError = require('../utils/AppError');
 const logger = require('../config/logger');
-
-// ── Keyword → category mapping ──────────────────────────────
-// Used to auto-assign agents when the user doesn't manually pick them.
-// Maps common slot name keywords to Agent categories.
-const KEYWORD_CATEGORY_MAP = {
-    review: 'analyzer',
-    analyze: 'analyzer',
-    analysis: 'analyzer',
-    classify: 'classifier',
-    categorize: 'classifier',
-    sort: 'classifier',
-    triage: 'classifier',
-    write: 'writer',
-    draft: 'writer',
-    summarize: 'writer',
-    compose: 'writer',
-    rank: 'ranker',
-    prioritize: 'ranker',
-    score: 'ranker',
-    lint: 'linter',
-    style: 'linter',
-    format: 'linter',
-    scan: 'scanner',
-    security: 'scanner',
-    vulnerability: 'scanner',
-    explain: 'explainer',
-    document: 'explainer',
-    clarify: 'explainer',
-    schedule: 'scheduler',
-    plan: 'scheduler',
-    calendar: 'scheduler',
-    research: 'researcher',
-    investigate: 'researcher',
-    find: 'researcher',
-    search: 'researcher',
-};
-
-/**
- * Infers the best Agent category from a slot name using keyword matching.
- * Falls back to 'analyzer' if no keyword matches.
- */
-const inferCategory = (slotName) => {
-    const lower = slotName.toLowerCase();
-    for (const [keyword, category] of Object.entries(KEYWORD_CATEGORY_MAP)) {
-        if (lower.includes(keyword)) {
-            return category;
-        }
-    }
-    return 'analyzer'; // safe fallback
-};
-
-/**
- * Fetches agents for a slot — ALWAYS returns `limit` agents.
- * Strategy: grab matching-category agents first, then backfill
- * from other categories (sorted by reliability) to hit the target.
- * This ensures every slot has 3 competitors for side-by-side battles.
- */
-const getTopAgentsByCategory = async (category, limit = 3) => {
-    // 1. Get agents from the matching category
-    const matched = await Agent.find({ category, isActive: true })
-        .sort({ reliabilityScore: -1, createdAt: -1 })
-        .limit(limit)
-        .select('_id');
-
-    const ids = matched.map((a) => a._id);
-
-    // 2. If we already have enough, return
-    if (ids.length >= limit) {
-        return ids;
-    }
-
-    // 3. Backfill from OTHER categories (exclude already-selected agents)
-    const remaining = limit - ids.length;
-    const backfill = await Agent.find({
-        _id: { $nin: ids },
-        isActive: true,
-    })
-        .sort({ reliabilityScore: -1, createdAt: -1 })
-        .limit(remaining)
-        .select('_id');
-
-    return [...ids, ...backfill.map((a) => a._id)];
-};
+const { selectAgentsForProblem } = require('../services/agentSelector');
 
 // ═══════════════════════════════════════════════════════════════
 // Endpoints
@@ -95,46 +12,30 @@ const getTopAgentsByCategory = async (category, limit = 3) => {
 
 /**
  * POST /api/v1/pipeline/create
- * Body: { outcomeText, slots: [{ name, task, evaluationCriteria, assignedAgents? }] }
- * If assignedAgents omitted for a slot → auto-assigns top 3 by inferred category.
+ * Body: { outcomeText, slots: [{ name, task, evaluationCriteria }] }
+ * Uses Groq-powered smart selection to pick 3 agents.
+ * Same 3 agents are assigned to ALL slots for the arena battle.
  */
 const createPipeline = async (req, res, next) => {
     try {
         const { outcomeText, slots } = req.body;
 
-        // Auto-assign agents to slots that don't have any
-        const processedSlots = await Promise.all(
-            slots.map(async (slot) => {
-                let assignedAgents = slot.assignedAgents || [];
+        // ── Smart agent selection: same 3 agents for ALL slots ──
+        const agents = await selectAgentsForProblem(outcomeText);
+        const agentIds = agents.map((a) => a._id);
 
-                if (assignedAgents.length === 0) {
-                    const category = inferCategory(slot.name);
-                    assignedAgents = await getTopAgentsByCategory(category);
+        logger.info({
+            message: 'Pipeline agents selected',
+            agents: agents.map((a) => ({ name: a.name, category: a.category })),
+        });
 
-                    if (assignedAgents.length === 0) {
-                        // Fallback: grab any 3 active agents
-                        const fallback = await Agent.find({ isActive: true })
-                            .sort({ reliabilityScore: -1 })
-                            .limit(3)
-                            .select('_id');
-                        assignedAgents = fallback.map((a) => a._id);
-                    }
-
-                    logger.info('Auto-assigned agents to slot', {
-                        slotName: slot.name,
-                        category: inferCategory(slot.name),
-                        agentCount: assignedAgents.length,
-                    });
-                }
-
-                return {
-                    name: slot.name,
-                    task: slot.task,
-                    evaluationCriteria: slot.evaluationCriteria,
-                    assignedAgents,
-                };
-            })
-        );
+        // Assign the same 3 agents to every slot
+        const processedSlots = slots.map((slot) => ({
+            name: slot.name,
+            task: slot.task,
+            evaluationCriteria: slot.evaluationCriteria,
+            assignedAgents: agentIds,
+        }));
 
         const pipeline = await Pipeline.create({
             userId: req.user._id,

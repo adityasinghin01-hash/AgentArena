@@ -1,7 +1,7 @@
 // models/Audition.js
 // Audition schema for AgentArena — records the results of running
-// a pipeline. Each audition pits agents against each other per slot,
-// scores their outputs, and picks a winner.
+// a pipeline. Same 3 agents compete in every round (slot).
+// Scores are cumulative — 1 overall winner is picked at the end.
 
 const mongoose = require('mongoose');
 
@@ -48,10 +48,6 @@ const resultSchema = new mongoose.Schema(
             type: Number,
             default: 0,
         },
-        winner: {
-            type: Boolean,
-            default: false,
-        },
     },
     { _id: true }
 );
@@ -89,6 +85,31 @@ const auditionSchema = new mongoose.Schema(
             },
             default: 'running',
         },
+
+        // ── Overall winner (set after all rounds complete) ────
+        overallWinner: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Agent',
+            default: null,
+        },
+
+        // ── Final leaderboard (cumulative scores across all rounds) ──
+        finalLeaderboard: [
+            {
+                agentId: {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: 'Agent',
+                },
+                agentName: { type: String },
+                totalScore: { type: Number, default: 0 },
+                slotScores: [
+                    {
+                        slot: { type: String },
+                        score: { type: Number },
+                    },
+                ],
+            },
+        ],
     },
     {
         timestamps: true,
