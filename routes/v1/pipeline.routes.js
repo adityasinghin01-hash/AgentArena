@@ -13,8 +13,22 @@ const {
 
 const router = express.Router();
 
+// ── Slot field normalizer ────────────────────────────────────
+// The AI decomposer returns evaluation_criteria (snake_case)
+// but our schema/validation uses evaluationCriteria (camelCase).
+const normalizeSlotsMiddleware = (req, _res, next) => {
+    if (Array.isArray(req.body.slots)) {
+        req.body.slots = req.body.slots.map((slot) => ({
+            ...slot,
+            evaluationCriteria: slot.evaluationCriteria || slot.evaluation_criteria || '',
+        }));
+    }
+    next();
+};
+
 // ── Validators ───────────────────────────────────────────────
 const createPipelineValidation = [
+    normalizeSlotsMiddleware,
     body('outcomeText')
         .trim()
         .notEmpty()

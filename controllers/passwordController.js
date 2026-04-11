@@ -5,6 +5,7 @@
 
 const crypto = require('crypto');
 const validator = require('validator');
+const config = require('../config/config');
 const User = require('../models/User');
 const hashToken = require('../utils/hashToken');
 const validatePassword = require('../utils/passwordValidator');
@@ -125,7 +126,7 @@ const renderResetPage = async (req, res, next) => {
   <div class="icon">❌</div>
   <h1>Link Expired</h1>
   <p>This password reset link is invalid or has expired. Please request a new one from the app.</p>
-  <a href="myapp://forgot-password" class="btn">Back to App →</a>
+  <a href="${config.CLIENT_URL}/forgot-password" class="btn">Back to App →</a>
 </div>
 </body>
 </html>`;
@@ -150,7 +151,7 @@ const renderResetPage = async (req, res, next) => {
   <div class="icon">🔑</div>
   <h1>Reset Your Password</h1>
   <p>Your reset link is valid. Tap the button below to open the app and set your new password.</p>
-  <a href="myapp://reset-password?token=${token}" class="btn">Reset Password →</a>
+  <a href="${config.CLIENT_URL}/reset-password?token=${token}" class="btn">Reset Password →</a>
 </div>
 </body>
 </html>`);
