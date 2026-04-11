@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "lint": "eslint .",
+    "lint": "eslint controllers middleware models routes scripts services tests utils config app.js server.js eslint.config.js jest.config.js",
     "test": "jest",
     "test:ai": "node scripts/test-claude-service.js",
     "seed:agents": "node scripts/seed-agents.js"

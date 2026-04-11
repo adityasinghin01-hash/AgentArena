@@ -5,7 +5,7 @@ const globals = require('globals');
 
 module.exports = [
   {
-    ignores: ['frontend/**'],
+    ignores: ['frontend/**', 'frontend-next/**'],
   },
   {
     languageOptions: {
