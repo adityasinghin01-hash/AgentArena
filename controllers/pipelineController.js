@@ -20,22 +20,41 @@ const createPipeline = async (req, res, next) => {
     try {
         const { outcomeText, slots } = req.body;
 
-        // ── Smart agent selection: same 3 agents for ALL slots ──
-        const agents = await selectAgentsForProblem(outcomeText);
-        const agentIds = agents.map((a) => a._id);
+        // ── Determine assigned agents ────────────────────────────
+        // If ANY slot already carries explicit assignedAgents, honour them
+        // (e.g. tests or manual API calls).
+        // Otherwise run Smart 3-Agent tournament selection.
+        const hasExplicitAgents = slots.some(
+            (s) => Array.isArray(s.assignedAgents) && s.assignedAgents.length > 0,
+        );
 
-        logger.info({
-            message: 'Pipeline agents selected',
-            agents: agents.map((a) => ({ name: a.name, category: a.category })),
-        });
+        let processedSlots;
 
-        // Assign the same 3 agents to every slot
-        const processedSlots = slots.map((slot) => ({
-            name: slot.name,
-            task: slot.task,
-            evaluationCriteria: slot.evaluationCriteria,
-            assignedAgents: agentIds,
-        }));
+        if (hasExplicitAgents) {
+            // Honour whatever the caller sent per-slot
+            processedSlots = slots.map((slot) => ({
+                name: slot.name,
+                task: slot.task,
+                evaluationCriteria: slot.evaluationCriteria,
+                assignedAgents: slot.assignedAgents ?? [],
+            }));
+        } else {
+            // Smart selection: same 3 agents assigned to every slot
+            const agents = await selectAgentsForProblem(outcomeText);
+            const agentIds = agents.map((a) => a._id);
+
+            logger.info({
+                message: 'Pipeline agents selected',
+                agents: agents.map((a) => ({ name: a.name, category: a.category })),
+            });
+
+            processedSlots = slots.map((slot) => ({
+                name: slot.name,
+                task: slot.task,
+                evaluationCriteria: slot.evaluationCriteria,
+                assignedAgents: agentIds,
+            }));
+        }
 
         const pipeline = await Pipeline.create({
             userId: req.user._id,
