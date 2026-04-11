@@ -4,6 +4,10 @@
 const globals = require('globals');
 
 module.exports = [
+  // Ignore browser-env directories — they have their own ESLint setups
+  {
+    ignores: ['frontend/**', 'frontend-next/**'],
+  },
   {
     languageOptions: {
       ecmaVersion: 2021,
