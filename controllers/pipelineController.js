@@ -42,7 +42,7 @@ const createPipeline = async (req, res, next) => {
             processedSlots = slots.map((slot) => ({
                 name: slot.name,
                 task: slot.task,
-                evaluationCriteria: slot.evaluationCriteria,
+                evaluationCriteria: slot.evaluationCriteria || slot.evaluation_criteria || '',
                 assignedAgents: slot.assignedAgents ?? [],
             }));
         } else {
@@ -58,7 +58,7 @@ const createPipeline = async (req, res, next) => {
             processedSlots = slots.map((slot) => ({
                 name: slot.name,
                 task: slot.task,
-                evaluationCriteria: slot.evaluationCriteria,
+                evaluationCriteria: slot.evaluationCriteria || slot.evaluation_criteria || '',
                 assignedAgents: agentIds,
             }));
         }
