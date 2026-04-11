@@ -55,7 +55,7 @@ const pickCategories = async (outcomeText) => {
  * Returns the Agent document or null if none found.
  */
 const getBestAgentForCategory = async (category) => {
-    if (!category) return null;
+    if (!category) {return null;}
     return Agent.findOne({ category, isActive: true })
         .sort({ reliabilityScore: -1, createdAt: -1 });
 };

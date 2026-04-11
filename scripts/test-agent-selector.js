@@ -12,7 +12,6 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const config = require('../config/config');
 const { selectAgentsForProblem } = require('../services/agentSelector');
-const logger = require('../config/logger');
 
 const divider = () => console.log('\n' + '═'.repeat(60) + '\n');
 

@@ -5,6 +5,9 @@ const globals = require('globals');
 
 module.exports = [
   {
+    ignores: ['frontend/**'],
+  },
+  {
     languageOptions: {
       ecmaVersion: 2021,
       globals: {
