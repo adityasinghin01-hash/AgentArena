@@ -94,9 +94,9 @@ function ArenaPage() {
     if (preselectedAgentIds.length > 0) {
       dispatch({ type: 'SET_MODE', payload: 'manual' });
       // Fetch all agents and filter to get names/categories for display
-      fetchAgents().then(res => {
+      fetchAgents({ limit: 100 }).then(res => {
         const all = res.data?.agents || res.agents || [];
-        const matched = all.filter(a => preselectedAgentIds.includes(a._id));
+        const matched = all.filter(a => preselectedAgentIds.includes(String(a._id)));
         setMarketplaceAgents(matched);
       }).catch(() => {});
     }
@@ -113,7 +113,7 @@ function ArenaPage() {
     try {
       const [decomposeRes, agentsRes] = await Promise.all([
         decomposeOutcome(state.prompt),
-        fetchAgents(),
+        fetchAgents({ limit: 100 }),
       ]);
       const slots = decomposeRes.data?.slots || decomposeRes.slots || [];
       const agents = agentsRes.data?.agents || agentsRes.agents || [];

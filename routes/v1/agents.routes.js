@@ -17,6 +17,9 @@ const {
     updateAgent,
     deleteAgent,
     searchAgents,
+    toggleAgentStatus,
+    getMyAgents,
+    getMyAgent,
 } = require('../../controllers/agentController');
 
 // ── Rate limiters ────────────────────────────────────────────
@@ -98,16 +101,19 @@ const categoryParamValidation = [
 
 
 
-// ── Public routes ────────────────────────────────────────────
-// IMPORTANT: /search and /category/:category MUST come BEFORE /:id
+// ── Public routes ────────────────────────────────────────
+// IMPORTANT: /search, /mine, and /category/:category MUST come BEFORE /:id
 router.get('/search', agentReadLimiter, searchAgents);
+router.get('/mine', authMiddleware(), agentReadLimiter, getMyAgents);
+router.get('/mine/:id', authMiddleware(), agentReadLimiter, getMyAgent);
 router.get('/category/:category', agentReadLimiter, categoryParamValidation, validateRequest, getAgentsByCategory);
 router.get('/:id', agentReadLimiter, getAgent);
 router.get('/', agentReadLimiter, listAgents);
 
-// ── Protected routes ─────────────────────────────────────────
+// ── Protected routes ─────────────────────────────────────
 router.post('/', authMiddleware(), agentWriteLimiter, createAgentValidation, createAgent);
 router.put('/:id', authMiddleware(), agentWriteLimiter, updateAgentValidation, updateAgent);
+router.patch('/:id/toggle', authMiddleware(), agentWriteLimiter, toggleAgentStatus);
 router.delete('/:id', authMiddleware(), agentWriteLimiter, deleteAgent);
 
 module.exports = router;

@@ -16,6 +16,16 @@ const CATEGORIES = [
     'explainer',
     'scheduler',
     'researcher',
+    'security',
+    'writing',
+    'coding',
+    'data',
+    'business',
+    'education',
+    'marketing',
+    'assistant',
+    'health',
+    'travel',
     'other',
 ];
 
@@ -117,6 +127,35 @@ const agentSchema = new mongoose.Schema(
                 message: '{VALUE} is not a valid badge tier',
             },
             default: 'unverified',
+        },
+
+        // ── Pricing & Revenue ─────────────────────────────────────
+        price: {
+            type: Number,
+            default: 0,
+            min: [0, 'Price cannot be negative'],
+        },
+
+        totalRuns: {
+            type: Number,
+            default: 0,
+        },
+
+        avgScore: {
+            type: Number,
+            default: 0,
+            min: [0, 'Average score cannot be negative'],
+            max: [100, 'Average score cannot exceed 100'],
+        },
+
+        revenue: {
+            type: Number,
+            default: 0,
+        },
+
+        creator: {
+            type: String,
+            default: '',
         },
 
         // ── Ownership ────────────────────────────────────────────

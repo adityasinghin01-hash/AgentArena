@@ -181,7 +181,7 @@ export async function getMyBattles(page = 1) {
 // ── Marketplace endpoints (public) ── @rest-api-design ──────
 
 export async function searchAgents(query = '', category = 'all', sort = 'reliability', page = 1) {
-  const params = new URLSearchParams({ page, limit: 20, sort });
+  const params = new URLSearchParams({ page, limit: 50, sort });
   if (query) params.set('q', query);
   if (category && category !== 'all') params.set('category', category);
   return request(`/agents/search?${params.toString()}`);
@@ -209,4 +209,36 @@ export async function listApiKeys() {
 
 export async function revokeApiKey(keyId) {
   return requestWithAuth(`/apikeys/${keyId}`, { method: 'DELETE' });
+}
+
+// ── Deployer Agent Management ── @backend-architect @senior-fullstack ──
+export async function getMyAgents() {
+  return requestWithAuth('/agents/mine');
+}
+
+export async function createAgent(data) {
+  return requestWithAuth('/agents', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateAgent(agentId, data) {
+  return requestWithAuth(`/agents/${agentId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteAgent(agentId) {
+  return requestWithAuth(`/agents/${agentId}`, { method: 'DELETE' });
+}
+
+export async function toggleAgentStatus(agentId) {
+  return requestWithAuth(`/agents/${agentId}/toggle`, { method: 'PATCH' });
+}
+
+// Owner-view: no isActive filter, so paused agents still load
+export async function getMyAgentDetail(agentId) {
+  return requestWithAuth(`/agents/mine/${agentId}`);
 }

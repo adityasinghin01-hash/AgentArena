@@ -3,7 +3,7 @@
 // Skills: @ui-ux-pro-max @dark-mode-ui @glassmorphism @design-spells
 //         @react-best-practices @frontend-developer @senior-fullstack
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
@@ -44,6 +44,12 @@ export default function AgentDetailPage() {
   const [battles, setBattles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Detect deployer role
+  const isDeployer = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return sessionStorage.getItem('selectedRole') === 'deployer';
+  }, []);
 
   useEffect(() => {
     if (!id) return;
@@ -148,15 +154,24 @@ export default function AgentDetailPage() {
           ))}
         </div>
 
-        {/* ── CTA ── */}
+        {/* ── CTA — deployers get "Back to Marketplace", users get battle button ── */}
         <div className="flex gap-3 mb-10">
-          <button className="glow-button group h-12 transition-transform active:scale-95" style={{ borderRadius: 999 }}
-            onClick={() => router.push(`/arena?agents=${agent._id}`)}>
-            <div className="glow-button-track" style={{ borderRadius: 999 }} />
-            <div className="glow-button-inner px-8" style={{ borderRadius: 999 }}>
-              <span className="font-headline text-sm font-bold tracking-widest text-black uppercase group-hover:text-white">⚔️ Select for Battle</span>
-            </div>
-          </button>
+          {isDeployer ? (
+            <button
+              className="rounded-full border border-white/10 bg-white/[0.03] px-8 py-3 text-sm font-semibold text-white/70 hover:bg-white/[0.06] hover:text-white transition-all active:scale-95"
+              onClick={() => router.push('/agents')}
+            >
+              ← Back to Marketplace
+            </button>
+          ) : (
+            <button className="glow-button group h-12 transition-transform active:scale-95" style={{ borderRadius: 999 }}
+              onClick={() => router.push(`/arena?agents=${agent._id}`)}>
+              <div className="glow-button-track" style={{ borderRadius: 999 }} />
+              <div className="glow-button-inner px-8" style={{ borderRadius: 999 }}>
+                <span className="font-headline text-sm font-bold tracking-widest text-black uppercase group-hover:text-white">⚔️ Select for Battle</span>
+              </div>
+            </button>
+          )}
         </div>
 
         {/* ── Battle History ── */}

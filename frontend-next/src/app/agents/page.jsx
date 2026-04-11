@@ -1,29 +1,33 @@
 'use client';
-// Screen 9a: Agent Marketplace — browse, search, filter, select agents
+// Screen 9a: Agent Marketplace — "My Agents" + "Explore Marketplace"
 // Skills: @ui-ux-pro-max @dark-mode-ui @glassmorphism @design-spells
 //         @react-best-practices @frontend-developer @senior-fullstack
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { searchAgents } from '@/lib/api';
+import { searchAgents, getMyAgents } from '@/lib/api';
 import Navbar from '@/components/Navbar';
 
 const Beams = dynamic(() => import('@/components/Beams'), { ssr: false });
 
 // ── Constants ────────────────────────────────────────────────
 const CATEGORIES = [
-  { value: 'all', label: 'All Categories', icon: '🌐' },
+  { value: 'all', label: 'All', icon: '🌐' },
+  { value: 'security', label: 'Security', icon: '🛡️' },
+  { value: 'writing', label: 'Writing', icon: '✍️' },
+  { value: 'coding', label: 'Coding', icon: '💻' },
+  { value: 'data', label: 'Data', icon: '📊' },
+  { value: 'business', label: 'Business', icon: '💼' },
+  { value: 'education', label: 'Education', icon: '📚' },
+  { value: 'marketing', label: 'Marketing', icon: '📣' },
+  { value: 'assistant', label: 'Assistant', icon: '🤖' },
+  { value: 'health', label: 'Health', icon: '🏥' },
+  { value: 'travel', label: 'Travel', icon: '✈️' },
   { value: 'classifier', label: 'Classifier', icon: '🏷️' },
-  { value: 'writer', label: 'Writer', icon: '✍️' },
-  { value: 'ranker', label: 'Ranker', icon: '📊' },
   { value: 'analyzer', label: 'Analyzer', icon: '🔬' },
-  { value: 'linter', label: 'Linter', icon: '🧹' },
-  { value: 'scanner', label: 'Scanner', icon: '🔍' },
-  { value: 'explainer', label: 'Explainer', icon: '📖' },
-  { value: 'scheduler', label: 'Scheduler', icon: '📅' },
-  { value: 'researcher', label: 'Researcher', icon: '🔬' },
+  { value: 'other', label: 'Other', icon: '🧩' },
 ];
 
 const SORT_OPTIONS = [
@@ -41,66 +45,83 @@ const BADGE_COLORS = {
 };
 
 const CAT_ICONS = {
+  security: '🛡️', writing: '✍️', coding: '💻', data: '📊', business: '💼',
+  education: '📚', marketing: '📣', assistant: '🤖', health: '🏥', travel: '✈️',
   classifier: '🏷️', writer: '✍️', ranker: '📊', analyzer: '🔬',
   linter: '🧹', scanner: '🔍', explainer: '📖', scheduler: '📅',
-  researcher: '🔬', other: '🤖',
+  researcher: '🔬', other: '🧩',
 };
 
 // ═══════════════════════════════════════════════════════════════
 export default function MarketplacePage() {
   const router = useRouter();
-  const [agents, setAgents] = useState([]);
-  const [featured, setFeatured] = useState([]);
+  const [allAgents, setAllAgents] = useState([]);
+  const [myAgents, setMyAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('all');
   const [sort, setSort] = useState('reliability');
   const [selected, setSelected] = useState([]);
   const [total, setTotal] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const debounceRef = useRef(null);
 
-  // ── Load agents ────────────────────────────────────────────
-  const load = useCallback(async (q, cat, s) => {
+  // Detect deployer role — deployers view agents, not battle them
+  const isDeployer = useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    const role = sessionStorage.getItem('selectedRole');
+    return role === 'deployer';
+  }, []);
+
+  // ── Load all marketplace agents ─────────────────────────────
+  const loadAll = useCallback(async (q, cat, s) => {
     try {
       setLoading(true);
       const res = await searchAgents(q, cat, s, 1);
-      const all = res.data?.agents || [];
-      setAgents(all);
+      setAllAgents(res.data?.agents || []);
       setTotal(res.data?.total || 0);
-      // Featured = elite or verified badges
-      setFeatured(all.filter(a => a.badgeTier === 'elite' || a.badgeTier === 'verified'));
     } catch {
-      setAgents([]);
+      setAllAgents([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { load('', 'all', 'reliability'); }, [load]);
+  // ── Load my agents (authenticated) ──────────────────────────
+  const loadMine = useCallback(async () => {
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+      if (!token) { setIsLoggedIn(false); return; }
+      setIsLoggedIn(true);
+      const res = await getMyAgents();
+      const active = (res.data?.agents || []).filter(a => a.isActive);
+      setMyAgents(active);
+    } catch {
+      setMyAgents([]);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadAll('', 'all', 'reliability');
+    loadMine();
+  }, [loadAll, loadMine]);
 
   // ── Debounced search ───────────────────────────────────────
   const handleSearch = (val) => {
     setQuery(val);
     clearTimeout(debounceRef.current);
-    debounceRef.current = setTimeout(() => load(val, category, sort), 300);
+    debounceRef.current = setTimeout(() => loadAll(val, category, sort), 300);
   };
 
-  const handleCategory = (cat) => {
-    setCategory(cat);
-    load(query, cat, sort);
-  };
-
-  const handleSort = (s) => {
-    setSort(s);
-    load(query, category, s);
-  };
+  const handleCategory = (cat) => { setCategory(cat); loadAll(query, cat, sort); };
+  const handleSort = (s) => { setSort(s); loadAll(query, category, s); };
 
   // ── Selection ──────────────────────────────────────────────
   const toggleSelect = (agent) => {
     setSelected((prev) => {
       const exists = prev.find(a => a._id === agent._id);
       if (exists) return prev.filter(a => a._id !== agent._id);
-      if (prev.length >= 4) return prev; // Max 4
+      if (prev.length >= 4) return prev;
       return [...prev, agent];
     });
   };
@@ -111,6 +132,10 @@ export default function MarketplacePage() {
     const ids = selected.map(a => a._id).join(',');
     router.push(`/arena?agents=${ids}`);
   };
+
+  // ── Separate "explore" agents (exclude mine) ───────────────
+  const myAgentIds = new Set(myAgents.map(a => a._id));
+  const exploreAgents = allAgents.filter(a => !myAgentIds.has(a._id));
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-surface">
@@ -124,7 +149,9 @@ export default function MarketplacePage() {
         {/* ── Header ── */}
         <div className="mb-8">
           <h1 className="font-serif italic text-3xl text-white mb-1">🏪 Agent Marketplace</h1>
-          <p className="text-white/30 text-sm">Browse AI agents and select your battle squad</p>
+          <p className="text-white/30 text-sm">
+            {isDeployer ? 'Browse AI agents, manage yours, and explore the marketplace' : 'Browse AI agents and build your battle squad'}
+          </p>
         </div>
 
         {/* ── Search + Filters ── */}
@@ -139,7 +166,7 @@ export default function MarketplacePage() {
               onChange={(e) => handleSearch(e.target.value)}
             />
             {query && (
-              <button className="mkt-search-clear" onClick={() => { setQuery(''); load('', category, sort); }}>✕</button>
+              <button className="mkt-search-clear" onClick={() => { setQuery(''); loadAll('', category, sort); }}>✕</button>
             )}
           </div>
           <select className="mkt-select" value={category} onChange={(e) => handleCategory(e.target.value)}>
@@ -154,42 +181,54 @@ export default function MarketplacePage() {
           </select>
         </div>
 
-        {/* ── Loading ── */}
+        {/* ── Loading Skeleton ── */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="shimmer" style={{ height: 240, borderRadius: 16 }} />
             ))}
           </div>
-        ) : (
+        ) : isDeployer ? (
+          /* ═══════════════ DEPLOYER VIEW: My Agents + Explore split ═══════════════ */
           <>
-            {/* ── Featured ── */}
-            {featured.length > 0 && !query && category === 'all' && (
-              <div className="mb-10">
-                <h2 className="text-[10px] font-bold tracking-[0.2em] text-white/25 uppercase mb-4">
-                  ★ Featured Agents
-                </h2>
+            {isLoggedIn && myAgents.length > 0 && !query && category === 'all' && (
+              <div className="mb-12">
+                <div className="flex items-center gap-3 mb-4">
+                  <h2 className="text-[10px] font-bold tracking-[0.2em] text-purple-400/60 uppercase">
+                    🚀 My Agents
+                  </h2>
+                  <span className="rounded-full bg-purple-500/10 border border-purple-500/20 px-2 py-0.5 text-[10px] font-semibold text-purple-400 uppercase tracking-widest">
+                    {myAgents.length} Active
+                  </span>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {featured.map(agent => (
+                  {myAgents.map(agent => (
                     <AgentCard
                       key={agent._id}
                       agent={agent}
-                      featured
-                      isSelected={isSelected(agent._id)}
-                      onToggle={() => toggleSelect(agent)}
-                      maxReached={selected.length >= 4}
+                      isOwned={true}
+                      isSelected={false}
+                      onEdit={() => router.push(`/deployer/agents/${agent._id}/analytics`)}
+                      onView={() => router.push(`/agents/${agent._id}`)}
+                      maxReached={false}
+                      isDeployer={true}
                     />
                   ))}
                 </div>
               </div>
             )}
-
-            {/* ── All Agents ── */}
             <div className="mb-8">
-              <h2 className="text-[10px] font-bold tracking-[0.2em] text-white/25 uppercase mb-4">
-                All Agents {total > 0 && <span className="text-white/15">({total})</span>}
-              </h2>
-              {agents.length === 0 ? (
+              <div className="flex items-center gap-3 mb-4">
+                <h2 className="text-[10px] font-bold tracking-[0.2em] text-white/25 uppercase">
+                  🌐 Explore Marketplace
+                </h2>
+                {total > 0 && (
+                  <span className="text-white/15 text-[10px] font-bold tracking-[0.2em] uppercase">
+                    ({exploreAgents.length})
+                  </span>
+                )}
+              </div>
+              {exploreAgents.length === 0 ? (
                 <div className="dash-empty-state">
                   <div className="text-4xl mb-4">🤖</div>
                   <h3 className="text-white/60 text-lg font-serif italic mb-2">No agents found</h3>
@@ -197,24 +236,62 @@ export default function MarketplacePage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {agents.filter(a => !featured.some(f => f._id === a._id) || query || category !== 'all').map(agent => (
+                  {exploreAgents.map(agent => (
                     <AgentCard
                       key={agent._id}
                       agent={agent}
-                      isSelected={isSelected(agent._id)}
-                      onToggle={() => toggleSelect(agent)}
-                      maxReached={selected.length >= 4}
+                      isOwned={false}
+                      isSelected={false}
+                      onView={() => router.push(`/agents/${agent._id}`)}
+                      maxReached={false}
+                      isDeployer={true}
                     />
                   ))}
                 </div>
               )}
             </div>
           </>
+        ) : (
+          /* ═══════════════ USER VIEW: Single flat grid of ALL agents ═══════════════ */
+          <div className="mb-8">
+            <div className="flex items-center gap-3 mb-4">
+              <h2 className="text-[10px] font-bold tracking-[0.2em] text-white/25 uppercase">
+                🌐 All Agents
+              </h2>
+              {total > 0 && (
+                <span className="text-white/15 text-[10px] font-bold tracking-[0.2em] uppercase">
+                  ({allAgents.length})
+                </span>
+              )}
+            </div>
+            {allAgents.length === 0 ? (
+              <div className="dash-empty-state">
+                <div className="text-4xl mb-4">🤖</div>
+                <h3 className="text-white/60 text-lg font-serif italic mb-2">No agents found</h3>
+                <p className="text-white/25 text-sm">Try adjusting your search or filters</p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {allAgents.map(agent => (
+                  <AgentCard
+                    key={agent._id}
+                    agent={agent}
+                    isOwned={false}
+                    isSelected={isSelected(agent._id)}
+                    onToggle={() => toggleSelect(agent)}
+                    maxReached={selected.length >= 4}
+                    isDeployer={false}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         )}
       </main>
 
       {/* ── Sticky Selection Bar ── */}
-      {selected.length > 0 && (
+      {/* Selection bar — only for users, not deployers */}
+      {!isDeployer && selected.length > 0 && (
         <div className="mkt-selection-bar">
           <div className="mkt-selection-inner">
             <div className="mkt-selection-agents">
@@ -242,23 +319,23 @@ export default function MarketplacePage() {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// AGENT CARD COMPONENT
+// AGENT CARD COMPONENT — with owner edit icon
 // ═══════════════════════════════════════════════════════════════
-function AgentCard({ agent, featured, isSelected, onToggle, maxReached }) {
+function AgentCard({ agent, featured, isOwned, isSelected, onToggle, onEdit, onView, maxReached, isDeployer }) {
   const badge = BADGE_COLORS[agent.badgeTier] || BADGE_COLORS.unverified;
   const icon = CAT_ICONS[agent.category] || '🤖';
   const wr = Math.round(agent.winRate || 0);
 
   return (
-    <div className={`mkt-card ${featured ? 'mkt-card-featured' : ''} ${isSelected ? 'mkt-card-selected' : ''}`}
+    <div className={`mkt-card ${featured ? 'mkt-card-featured' : ''} ${isSelected ? 'mkt-card-selected' : ''} ${isOwned ? 'ring-1 ring-purple-500/20' : ''}`}
       style={featured ? { borderColor: badge.border } : undefined}>
 
       {/* Header */}
       <div className="mkt-card-header">
-        <div className="mkt-card-avatar" style={{ borderColor: badge.border }}>
+        <div className="mkt-card-avatar" style={{ borderColor: isOwned ? '#a855f7' : badge.border }}>
           {icon}
         </div>
-        <div className="mkt-card-title-area">
+        <div className="mkt-card-title-area" style={{ flex: 1 }}>
           <Link href={`/agents/${agent._id}`} className="mkt-card-name">{agent.name}</Link>
           <div className="flex items-center gap-2">
             <span className="mkt-card-category">{agent.category}</span>
@@ -267,6 +344,17 @@ function AgentCard({ agent, featured, isSelected, onToggle, maxReached }) {
             </span>
           </div>
         </div>
+
+        {/* Owner edit icon */}
+        {isOwned && onEdit && (
+          <button
+            onClick={(e) => { e.stopPropagation(); onEdit(); }}
+            className="flex items-center justify-center w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 hover:bg-purple-500/20 transition-all duration-200 shrink-0 ml-2 group/edit"
+            title="View Analytics & Edit"
+          >
+            <span className="material-symbols-outlined text-[16px] text-purple-400 group-hover/edit:text-purple-300 transition-colors">edit</span>
+          </button>
+        )}
       </div>
 
       {/* Description */}
@@ -290,13 +378,22 @@ function AgentCard({ agent, featured, isSelected, onToggle, maxReached }) {
         )}
       </div>
 
-      {/* Select Button */}
-      <button
-        className={`mkt-card-select ${isSelected ? 'mkt-card-select-active' : ''}`}
-        onClick={(e) => { e.stopPropagation(); onToggle(); }}
-        disabled={!isSelected && maxReached}>
-        {isSelected ? '✓ Selected' : '+ Select'}
-      </button>
+      {/* Action Button — deployers get "View", users get "+ Select" */}
+      {isDeployer ? (
+        <button
+          className="mkt-card-select"
+          onClick={(e) => { e.stopPropagation(); onView?.(); }}
+        >
+          View Agent →
+        </button>
+      ) : (
+        <button
+          className={`mkt-card-select ${isSelected ? 'mkt-card-select-active' : ''}`}
+          onClick={(e) => { e.stopPropagation(); onToggle?.(); }}
+          disabled={!isSelected && maxReached}>
+          {isSelected ? '✓ Selected' : '+ Select'}
+        </button>
+      )}
     </div>
   );
 }

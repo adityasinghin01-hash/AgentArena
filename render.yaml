@@ -1,16 +1,21 @@
 # render.yaml
 # Infrastructure-as-Code for Render deployment.
+# Deploys both the Express backend and Next.js frontend.
 
 services:
+  # ── Backend (Express API) ──────────────────────────────────
   - type: web
     name: agentarena-backend
-    env: node
+    runtime: node
+    plan: free
     buildCommand: npm install
     startCommand: npm start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
         value: production
+      - key: PORT
+        value: 10000
       - key: MONGO_URI
         sync: false
       - key: JWT_ACCESS_SECRET
@@ -23,7 +28,43 @@ services:
         sync: false
       - key: GROQ_API_KEY
         sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: GEMINI_API_KEY
+        sync: false
       - key: AI_PROVIDER
         value: groq
       - key: SEED_USER_ID
+        sync: false
+      - key: RECAPTCHA_SECRET
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: CLIENT_URL
+        sync: false
+      - key: BASE_URL
+        sync: false
+
+  # ── Frontend (Next.js) ─────────────────────────────────────
+  - type: web
+    name: agentarena-frontend
+    runtime: node
+    plan: free
+    rootDir: frontend-next
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: NEXT_PUBLIC_API_URL
+        sync: false
+      - key: NEXT_PUBLIC_GOOGLE_CLIENT_ID
+        sync: false
+      - key: NEXT_PUBLIC_RECAPTCHA_SITE_KEY
         sync: false

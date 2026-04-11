@@ -344,6 +344,99 @@ const searchAgents = async (req, res, next) => {
     }
 };
 
+// ── PATCH /api/v1/agents/:id/toggle — flip active/paused (protected) ──
+const toggleAgentStatus = async (req, res, next) => {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid agent ID format.',
+            });
+        }
+
+        const agent = await Agent.findById(req.params.id);
+
+        if (!agent) {
+            return res.status(404).json({
+                success: false,
+                message: 'Agent not found.',
+            });
+        }
+
+        // Ownership check
+        if (agent.deployedBy.toString() !== req.user._id.toString()) {
+            return res.status(403).json({
+                success: false,
+                message: 'Forbidden — you can only toggle your own agents.',
+            });
+        }
+
+        agent.isActive = !agent.isActive;
+        await agent.save();
+
+        logger.info('Agent status toggled', {
+            agentId: agent._id,
+            isActive: agent.isActive,
+            toggledBy: req.user._id,
+        });
+
+        return res.status(200).json({
+            success: true,
+            message: `Agent ${agent.isActive ? 'activated' : 'paused'} successfully.`,
+            data: { agent },
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// ── GET /api/v1/agents/mine — list agents by logged-in user (protected) ──
+const getMyAgents = async (req, res, next) => {
+    try {
+        const agents = await Agent.find({ deployedBy: req.user._id })
+            .sort({ createdAt: -1 })
+            .populate('deployedBy', 'name');
+
+        return res.status(200).json({
+            success: true,
+            data: { agents, total: agents.length },
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// ── GET /api/v1/agents/mine/:id — single agent for owner (protected) ──
+const getMyAgent = async (req, res, next) => {
+    try {
+        if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid agent ID format.',
+            });
+        }
+
+        const agent = await Agent.findOne({
+            _id: req.params.id,
+            deployedBy: req.user._id,
+        }).populate('deployedBy', 'name');
+
+        if (!agent) {
+            return res.status(404).json({
+                success: false,
+                message: 'Agent not found or you do not own it.',
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            data: { agent },
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     createAgent,
     listAgents,
@@ -352,4 +445,8 @@ module.exports = {
     updateAgent,
     deleteAgent,
     searchAgents,
+    toggleAgentStatus,
+    getMyAgents,
+    getMyAgent,
 };
+

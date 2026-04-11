@@ -38,15 +38,34 @@ export default function Navbar() {
 
   const initial = (user?.name || user?.email || '?')[0].toUpperCase();
 
-  const links = [
-    { label: 'Arena', href: '/arena' },
-    { label: 'Marketplace', href: '/agents' },
-    { label: 'Dashboard', href: '/dashboard' },
-  ];
+  // Determine role: deployer or user
+  const [role, setRole] = useState(null);
+  useEffect(() => {
+    const savedRole = typeof window !== 'undefined'
+      ? sessionStorage.getItem('selectedRole') || user?.role
+      : null;
+    setRole(savedRole);
+  }, [user]);
+
+  const isDeployer = role === 'deployer';
+
+  // Role-aware nav links: deployers see Marketplace + My Agents, users see Arena + Marketplace + Dashboard
+  const links = isDeployer
+    ? [
+        { label: 'Marketplace', href: '/agents' },
+        { label: 'My Agents', href: '/deployer' },
+      ]
+    : [
+        { label: 'Arena', href: '/arena' },
+        { label: 'Marketplace', href: '/agents' },
+        { label: 'Dashboard', href: '/dashboard' },
+      ];
+
+  const homePath = isDeployer ? '/deployer' : '/arena';
 
   return (
     <nav className="navbar">
-      <a href="/arena" className="navbar-logo">AgentArena</a>
+      <a href={homePath} className="navbar-logo" onClick={(e) => { e.preventDefault(); router.push(homePath); }}>AgentArena</a>
 
       <div className="navbar-links">
         {links.map((l) => (
@@ -69,12 +88,16 @@ export default function Navbar() {
 
         {open && (
           <div className="navbar-dropdown">
-            <button className="navbar-dropdown-item" onClick={() => router.push('/dashboard')}>
-              Dashboard
-            </button>
-            <button className="navbar-dropdown-item" onClick={() => router.push('/settings')}>
-              Settings
-            </button>
+            {!isDeployer && (
+              <button className="navbar-dropdown-item" onClick={() => router.push('/dashboard')}>
+                Dashboard
+              </button>
+            )}
+            {isDeployer && (
+              <button className="navbar-dropdown-item" onClick={() => router.push('/deployer')}>
+                My Agents
+              </button>
+            )}
             <button className="navbar-dropdown-item danger" onClick={handleLogout}>
               Logout
             </button>
