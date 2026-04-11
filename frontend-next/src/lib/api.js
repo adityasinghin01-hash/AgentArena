@@ -113,3 +113,10 @@ export async function refreshAccessToken(refreshToken) {
 export async function checkVerificationStatus(email) {
   return request(`/check-verification-status?email=${encodeURIComponent(email)}`);
 }
+
+export async function updateRole(role) {
+  return requestWithAuth('/role', {
+    method: 'PATCH',
+    body: JSON.stringify({ role }),
+  });
+}

@@ -3,6 +3,7 @@
 
 const roles = {
     USER: 'user',
+    DEPLOYER: 'deployer',
     MODERATOR: 'moderator',
     ADMIN: 'admin',
     SUPERADMIN: 'superadmin'
@@ -32,6 +33,13 @@ const permissions = {
 
 const rolePermissions = {
     [roles.USER]: [
+        permissions.READ_PROFILE,
+        permissions.UPDATE_PROFILE,
+        permissions.CREATE_POST,
+        permissions.UPDATE_OWN_POST,
+        permissions.DELETE_OWN_POST
+    ],
+    [roles.DEPLOYER]: [
         permissions.READ_PROFILE,
         permissions.UPDATE_PROFILE,
         permissions.CREATE_POST,

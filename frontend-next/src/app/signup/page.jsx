@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { signupUser, loginUser, checkVerificationStatus } from '@/lib/api';
+import { signupUser, loginUser, checkVerificationStatus, updateRole } from '@/lib/api';
 import { saveTokens, saveUser } from '@/lib/auth';
 
 const Beams = dynamic(() => import('@/components/Beams'), { ssr: false });
@@ -33,8 +33,17 @@ export default function SignupPage() {
         try {
           const loginData = await loginUser({ email, password, rememberMe: false });
           saveTokens(loginData.accessToken, loginData.refreshToken);
-          saveUser(loginData.user);
-          router.push('/arena');
+          let finalUser = loginData.user;
+          const pendingRole = sessionStorage.getItem('selectedRole');
+          if (pendingRole && ['user', 'deployer'].includes(pendingRole) && pendingRole !== finalUser.role) {
+            try {
+              const rd = await updateRole(pendingRole);
+              finalUser.role = rd.role;
+              sessionStorage.removeItem('selectedRole');
+            } catch (_e) { /* silent */ }
+          }
+          saveUser(finalUser);
+          router.push(finalUser.role === 'deployer' ? '/deployer' : '/arena');
         } catch {
           router.push(`/login?verified=true&email=${encodeURIComponent(email)}`);
         }

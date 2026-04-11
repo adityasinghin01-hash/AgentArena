@@ -49,4 +49,28 @@ const getDashboard = async (req, res, next) => {
     }
 };
 
-module.exports = { getProfile, getDashboard };
+// ── Update Role ──────────────────────────────────────────
+// PATCH /api/role — protected
+// Allows user to switch between 'user' and 'deployer'.
+const updateRole = async (req, res, next) => {
+    try {
+        const { role } = req.body;
+        const user = req.user;
+
+        if (!role || !['user', 'deployer'].includes(role)) {
+            return res.status(400).json({ message: 'Invalid role. Must be "user" or "deployer".' });
+        }
+
+        user.role = role;
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            role: user.role,
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+module.exports = { getProfile, getDashboard, updateRole };

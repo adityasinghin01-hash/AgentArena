@@ -13,4 +13,7 @@ router.get('/profile', protect(), userController.getProfile);
 // GET /api/dashboard — protected (requires valid access token)
 router.get('/dashboard', protect(), userController.getDashboard);
 
+// PATCH /api/role — switch between user/deployer
+router.patch('/role', protect(), userController.updateRole);
+
 module.exports = router;

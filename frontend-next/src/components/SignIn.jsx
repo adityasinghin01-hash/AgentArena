@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import ReCAPTCHA from 'react-google-recaptcha';
-import { loginUser, googleLogin } from '@/lib/api';
+import { loginUser, googleLogin, updateRole } from '@/lib/api';
 import { saveTokens, saveUser } from '@/lib/auth';
 
 const SignIn = () => {
@@ -15,6 +15,19 @@ const SignIn = () => {
   const [error, setError] = useState(null);
   const recaptchaRef = useRef(null);
 
+  // Sync role from sessionStorage (set during onboarding) to backend
+  const syncRole = async (user) => {
+    const pendingRole = typeof window !== 'undefined' ? sessionStorage.getItem('selectedRole') : null;
+    if (pendingRole && ['user', 'deployer'].includes(pendingRole) && pendingRole !== user.role) {
+      try {
+        const data = await updateRole(pendingRole);
+        user.role = data.role;
+        sessionStorage.removeItem('selectedRole');
+      } catch (_err) { /* silent — role stays default */ }
+    }
+    return user;
+  };
+
   // ── Google Sign-In setup ────────────────────────────────
   const handleGoogleResponse = useCallback(async (response) => {
     setError(null);
@@ -22,8 +35,9 @@ const SignIn = () => {
     try {
       const data = await googleLogin(response.credential);
       saveTokens(data.accessToken, data.refreshToken);
-      saveUser(data.user);
-      router.push('/arena');
+      const finalUser = await syncRole(data.user);
+      saveUser(finalUser);
+      router.push(finalUser.role === 'deployer' ? '/deployer' : '/arena');
     } catch (err) {
       setError(err.message || 'Google login failed. Please try again.');
     } finally {
@@ -78,8 +92,9 @@ const SignIn = () => {
       const recaptchaToken = recaptchaRef.current?.getValue() || 'dev-bypass';
       const data = await loginUser({ email, password, rememberMe: false, recaptchaToken });
       saveTokens(data.accessToken, data.refreshToken);
-      saveUser(data.user);
-      router.push('/arena');
+      const finalUser = await syncRole(data.user);
+      saveUser(finalUser);
+      router.push(finalUser.role === 'deployer' ? '/deployer' : '/arena');
     } catch (err) {
       setError(err.message || 'Login failed. Please try again.');
       recaptchaRef.current?.reset();
