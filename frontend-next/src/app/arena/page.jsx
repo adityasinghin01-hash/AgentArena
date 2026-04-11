@@ -127,7 +127,7 @@ export default function ArenaPage() {
       const slotsWithAgents = state.slots.map((slot, idx) => ({
         name: slot.name,
         task: slot.task,
-        evaluationCriteria: slot.evaluationCriteria || slot.evaluation_criteria || '',
+        evaluationCriteria: slot.evaluationCriteria || slot.evaluation_criteria || slot.task || 'Evaluate quality, accuracy, and completeness',
         assignedAgents: state.selectedAgents[idx] || [],
       }));
 
@@ -143,7 +143,7 @@ export default function ArenaPage() {
         slots: slotsWithAgents,
       });
 
-      const pipelineId = pipeline.data?._id || pipeline._id;
+      const pipelineId = pipeline.data?.pipelineId || pipeline.data?.pipeline?._id || pipeline._id;
       router.push(`/battle/${pipelineId}?input=${encodeURIComponent(state.prompt)}`);
     } catch (err) {
       dispatch({ type: 'LAUNCH_ERROR', payload: err.message || 'Failed to start battle.' });

@@ -51,9 +51,8 @@ const createPipelineValidation = [
         .withMessage('Each slot must have a task'),
 
     body('slots.*.evaluationCriteria')
-        .trim()
-        .notEmpty()
-        .withMessage('Each slot must have evaluationCriteria'),
+        .optional({ values: 'falsy' })
+        .trim(),
 
     body('slots.*.assignedAgents')
         .optional()
