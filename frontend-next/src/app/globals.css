@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-background: #0a0a0f;
+  --color-foreground: #ffffff;
+  
+  --color-primary: #7c3aed; /* Purple 600 */
+  --color-primary-hover: #6d28d9; /* Purple 700 */
+  
+  --color-accent: #06b6d4; /* Cyan 500 */
+  --color-accent-hover: #0891b2; /* Cyan 600 */
+  
+  --color-surface: #12121a;
+  --color-surface-hover: #1c1c26;
+  --color-border: #2a2a3b;
+
+  --font-sans: var(--font-inter);
+}
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-sans), sans-serif;
+}
+
+/* Base custom utility classes we might need for glow effects */
+@layer utilities {
+  .glow-primary {
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+  }
+  .glow-accent {
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.4);
+  }
+  .glow-red {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
+  }
+}
