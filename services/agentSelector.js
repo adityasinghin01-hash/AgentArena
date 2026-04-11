@@ -134,17 +134,15 @@ const selectAgentsForProblem = async (outcomeText) => {
     if (selected.length < 3) {
         const remaining = 3 - selected.length;
         const backfill = await Agent.find({
-            _id: { $nin: Array.from(selectedIds).map((id) => id) },
+            _id: { $nin: [...selectedIds] },
             isActive: true,
         })
             .sort({ reliabilityScore: -1, createdAt: -1 })
             .limit(remaining);
 
         for (const agent of backfill) {
-            if (!selectedIds.has(agent._id.toString())) {
-                selected.push(agent);
-                selectedIds.add(agent._id.toString());
-            }
+            selected.push(agent);
+            selectedIds.add(agent._id.toString());
         }
     }
 

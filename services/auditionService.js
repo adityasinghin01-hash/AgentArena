@@ -306,6 +306,11 @@ const runAudition = async (pipeline, userInput, sseCallback) => {
 
     const winner = finalLeaderboard[0];
 
+    if (!winner) {
+        sseCallback({ event: 'error', message: 'No agents completed the audition' });
+        return null;
+    }
+
     // ── 6. Save Audition to DB ───────────────────────────────
     const audition = await Audition.create({
         pipelineId: pipeline._id,

@@ -20,6 +20,13 @@ const createPipeline = async (req, res, next) => {
     try {
         const { outcomeText, slots } = req.body;
 
+        if (!Array.isArray(slots) || slots.length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'slots must be a non-empty array',
+            });
+        }
+
         // ── Determine assigned agents ────────────────────────────
         // If ANY slot already carries explicit assignedAgents, honour them
         // (e.g. tests or manual API calls).
