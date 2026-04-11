@@ -10,8 +10,13 @@ export default function Navbar() {
   const router = useRouter();
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState(null);
   const dropdownRef = useRef(null);
-  const user = getUser();
+
+  // Read user from localStorage only on client — fixes hydration mismatch
+  useEffect(() => {
+    setUser(getUser());
+  }, []);
 
   // Close dropdown on outside click
   useEffect(() => {

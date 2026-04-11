@@ -42,15 +42,12 @@ const generateKeyData = () => {
  * the key, preventing concurrent over-allocation race conditions.
  */
 exports.createApiKey = async (userId, name, scopes = ['api:read']) => {
-    // Verify user plan and limits (outside transaction — read-only)
+    // Plan enforcement — check subscription if exists, otherwise allow (hackathon/demo mode)
+    let maxApiKeys = -1; // -1 = unlimited
     const activeSub = await Subscription.findOne({ userId, status: 'active' }).populate('planId');
-    if (!activeSub || !activeSub.planId) {
-        const err = new Error('User does not have an active subscription');
-        err.statusCode = 403;
-        throw err;
+    if (activeSub?.planId?.limits?.maxApiKeys) {
+        maxApiKeys = activeSub.planId.limits.maxApiKeys;
     }
-
-    const { maxApiKeys } = activeSub.planId.limits;
 
     // Generate keys securely (will throw if salt is missing)
     const { rawKey, storedPrefix, keyHash } = generateKeyData();
@@ -63,7 +60,7 @@ exports.createApiKey = async (userId, name, scopes = ['api:read']) => {
         if (maxApiKeys !== -1) {
             const currentActiveKeys = await ApiKey.countDocuments({ userId, isActive: true }).session(session);
             if (currentActiveKeys >= maxApiKeys) {
-                const err = new Error(`Plan limit reached: Maximum of ${maxApiKeys} API key(s) allowed on the ${activeSub.planId.displayName} plan.`);
+                const err = new Error(`Plan limit reached: Maximum of ${maxApiKeys} API key(s) allowed.`);
                 err.statusCode = 429;
                 throw err;
             }

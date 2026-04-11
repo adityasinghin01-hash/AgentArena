@@ -180,9 +180,72 @@ const getAuditionsByPipeline = async (req, res, next) => {
         return next(err);
     }
 };
+/**
+ * GET /api/v1/audition/my
+ * Returns the current user's auditions (battle history), paginated.
+ * Query: page (default 1), limit (default 20, max 50)
+ */
+const getUserAuditions = async (req, res, next) => {
+    try {
+        const page = Math.max(1, parseInt(req.query.page, 10) || 1);
+        const limit = Math.min(50, Math.max(1, parseInt(req.query.limit, 10) || 20));
+        const skip = (page - 1) * limit;
+
+        const [auditions, total] = await Promise.all([
+            Audition.find({ userId: req.user._id, status: 'complete' })
+                .sort({ createdAt: -1 })
+                .skip(skip)
+                .limit(limit)
+                .select('userInput overallWinner finalLeaderboard status createdAt')
+                .populate('overallWinner', 'name category badgeTier'),
+            Audition.countDocuments({ userId: req.user._id, status: 'complete' }),
+        ]);
+
+        return res.status(200).json({
+            success: true,
+            count: auditions.length,
+            total,
+            page,
+            totalPages: Math.ceil(total / limit),
+            data: auditions,
+        });
+    } catch (err) {
+        return next(err);
+    }
+};
+
+/**
+ * GET /api/v1/audition/agent/:agentId
+ * Returns recent completed auditions that a specific agent participated in.
+ * Public endpoint — used by Agent Detail page.
+ */
+const getAgentBattleHistory = async (req, res, next) => {
+    try {
+        const { agentId } = req.params;
+        const limit = Math.min(10, Math.max(1, parseInt(req.query.limit, 10) || 5));
+
+        const auditions = await Audition.find({
+            status: 'complete',
+            'results.agentId': agentId,
+        })
+            .sort({ createdAt: -1 })
+            .limit(limit)
+            .select('userInput overallWinner finalLeaderboard createdAt')
+            .populate('overallWinner', 'name');
+
+        return res.status(200).json({
+            success: true,
+            data: auditions,
+        });
+    } catch (err) {
+        return next(err);
+    }
+};
 
 module.exports = {
     run,
     getAudition,
     getAuditionsByPipeline,
+    getUserAuditions,
+    getAgentBattleHistory,
 };

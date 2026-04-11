@@ -179,7 +179,12 @@ const updateAgentReliability = async (agentId, newScore, isWinner) => {
  */
 const runAudition = async (pipeline, userInput, sseCallback) => {
     const allResults = [];
-    const totalRounds = pipeline.slots.length;
+
+    // ── Cap rounds for rate-limit safety ─────────────────────
+    // @performance-optimization — limit rounds to avoid exhausting free-tier quotas.
+    const MAX_ROUNDS = 2;
+    const slotsToRun = pipeline.slots.slice(0, MAX_ROUNDS);
+    const totalRounds = slotsToRun.length;
 
     // ── Extract the 3 agents (same for every slot) ───────────
     // All slots have the same assignedAgents, so grab from first slot.
@@ -202,14 +207,19 @@ const runAudition = async (pipeline, userInput, sseCallback) => {
     });
 
     // ── Process each slot as a ROUND ─────────────────────────
-    for (let slotIndex = 0; slotIndex < pipeline.slots.length; slotIndex++) {
-        const slot = pipeline.slots[slotIndex];
+    for (let slotIndex = 0; slotIndex < slotsToRun.length; slotIndex++) {
+        const slot = slotsToRun[slotIndex];
 
         // ── 1. Run agents SEQUENTIALLY with stagger ────────────
-        // Groq free tier has 12K TPM. Running 3 agents in parallel
-        // burns through it instantly. Sequential + retry = reliable.
+        // Groq free tier: 30 req/min → 2s gap between calls is safe.
+        // All AI calls (runAgent + evaluateOutput) go through Groq.
         const agentResults = [];
-        for (const agent of agents) {
+        for (let ai = 0; ai < agents.length; ai++) {
+            const agent = agents[ai];
+            // Stagger: wait 3s between agents to respect Groq 30 RPM
+            if (ai > 0) {
+                await new Promise(r => setTimeout(r, 3000));
+            }
             const result = await runSingleAgent(agent, slot, userInput);
             agentResults.push(result);
         }
@@ -227,8 +237,13 @@ const runAudition = async (pipeline, userInput, sseCallback) => {
             });
         }
 
-        // ── 3. Score each agent's output ─────────────────────
-        for (const result of agentResults) {
+        // ── 3. Score each agent's output (with stagger) ──────
+        for (let si = 0; si < agentResults.length; si++) {
+            const result = agentResults[si];
+            // Stagger scoring calls — 2s gap for Groq 30 RPM
+            if (si > 0) {
+                await new Promise(r => setTimeout(r, 2000));
+            }
             const scores = await scoreAgent(result, slot);
             result.scores = scores;
 
@@ -281,6 +296,12 @@ const runAudition = async (pipeline, userInput, sseCallback) => {
                 responseTimeMs: r.responseTimeMs,
             }))
         );
+
+        // ── Cooldown between rounds ──────────────────────────
+        // Give Groq rate limits time to reset before the next round
+        if (slotIndex < slotsToRun.length - 1) {
+            await new Promise(r => setTimeout(r, 5000));
+        }
     }
 
     // ── 5. Pick OVERALL winner ───────────────────────────────
@@ -338,8 +359,8 @@ const runAudition = async (pipeline, userInput, sseCallback) => {
     // The overall winner gets a win increment.
     // All agents get their average round score as the reliability update.
     const reliabilityUpdates = finalLeaderboard.map((entry) => {
-        const avgScore = pipeline.slots.length > 0
-            ? Math.round(entry.totalScore / pipeline.slots.length)
+        const avgScore = totalRounds > 0
+            ? Math.round(entry.totalScore / totalRounds)
             : 0;
         const isWinner = entry.agentId === winner.agentId;
         return updateAgentReliability(entry.agentId, avgScore, isWinner);

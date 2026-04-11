@@ -284,6 +284,66 @@ const deleteAgent = async (req, res, next) => {
     }
 };
 
+// ── GET /api/v1/agents/search — search + filter + sort (public) ──
+const searchAgents = async (req, res, next) => {
+    try {
+        const { q, category, sort } = req.query;
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = Math.min(50, Math.max(1, parseInt(req.query.limit) || 20));
+        const skip = (page - 1) * limit;
+
+        const filter = { isActive: true };
+
+        // Text search via regex (case-insensitive)
+        if (q && q.trim().length > 0) {
+            const escaped = q.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            filter.$or = [
+                { name: { $regex: escaped, $options: 'i' } },
+                { description: { $regex: escaped, $options: 'i' } },
+            ];
+        }
+
+        // Category filter
+        if (category && category !== 'all') {
+            const { CATEGORIES } = require('../models/Agent');
+            if (CATEGORIES.includes(category)) {
+                filter.category = category;
+            }
+        }
+
+        // Sort options
+        let sortObj = { reliabilityScore: -1, createdAt: -1 };
+        switch (sort) {
+            case 'winRate': sortObj = { winRate: -1, createdAt: -1 }; break;
+            case 'totalAuditions': sortObj = { totalAuditions: -1, createdAt: -1 }; break;
+            case 'newest': sortObj = { createdAt: -1 }; break;
+            case 'reliability': sortObj = { reliabilityScore: -1, createdAt: -1 }; break;
+        }
+
+        const [agents, total] = await Promise.all([
+            Agent.find(filter)
+                .sort(sortObj)
+                .skip(skip)
+                .limit(limit)
+                .select('-systemPrompt')
+                .populate('deployedBy', 'name'),
+            Agent.countDocuments(filter),
+        ]);
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                agents,
+                total,
+                page,
+                totalPages: Math.ceil(total / limit),
+            },
+        });
+    } catch (err) {
+        next(err);
+    }
+};
+
 module.exports = {
     createAgent,
     listAgents,
@@ -291,4 +351,5 @@ module.exports = {
     getAgentsByCategory,
     updateAgent,
     deleteAgent,
+    searchAgents,
 };

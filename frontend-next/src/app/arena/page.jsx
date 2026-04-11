@@ -2,8 +2,8 @@
 // Screen 4a: Arena — The Competitive AI Playground
 // Skills: @frontend-developer @nextjs-patterns @react-best-practices @ui-ux-pro-max @dark-mode-ui @glassmorphism
 
-import { useEffect, useState, useReducer, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState, useReducer, useCallback, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { getAccessToken, getUser } from '@/lib/auth';
 import { decomposeOutcome, createPipeline, fetchAgents } from '@/lib/api';
@@ -70,14 +70,36 @@ function winRateClass(rate) {
   return 'win-low';
 }
 
-export default function ArenaPage() {
+// Suspense wrapper for useSearchParams — @nextjs-best-practices
+export default function ArenaPageWrapper() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-surface"><p className="text-white/40 font-body text-sm">Loading…</p></div>}>
+      <ArenaPage />
+    </Suspense>
+  );
+}
+
+function ArenaPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const preselectedAgentIds = searchParams.get('agents')?.split(',').filter(Boolean) || [];
   const [state, dispatch] = useReducer(arenaReducer, INITIAL_STATE);
   const [loading, setLoading] = useState(true);
+  const [marketplaceAgents, setMarketplaceAgents] = useState([]); // fetched agent details for display
 
-  // ── Auth guard ──
+  // ── Auth guard + auto-set Manual mode when coming from Marketplace ──
   useEffect(() => {
     if (!getAccessToken()) { router.replace('/login'); return; }
+    // If marketplace sent agents, force Manual mode and fetch their details
+    if (preselectedAgentIds.length > 0) {
+      dispatch({ type: 'SET_MODE', payload: 'manual' });
+      // Fetch all agents and filter to get names/categories for display
+      fetchAgents().then(res => {
+        const all = res.data?.agents || res.agents || [];
+        const matched = all.filter(a => preselectedAgentIds.includes(a._id));
+        setMarketplaceAgents(matched);
+      }).catch(() => {});
+    }
     setLoading(false);
   }, [router]);
 
@@ -96,16 +118,22 @@ export default function ArenaPage() {
       const slots = decomposeRes.data?.slots || decomposeRes.slots || [];
       const agents = agentsRes.data?.agents || agentsRes.agents || [];
 
-      // Auto-mode: pre-assign top agents to each slot
-      if (state.mode === 'auto' && agents.length > 0) {
-        const sorted = [...agents].sort((a, b) => (b.reliabilityScore || 0) - (a.reliabilityScore || 0));
-        const autoSelected = {};
-        slots.forEach((_, idx) => {
-          // Pick top 3 agents per slot (or fewer if not enough)
-          autoSelected[idx] = sorted.slice(0, Math.min(3, sorted.length)).map(a => a._id);
-        });
+      // Pre-select agents: marketplace agents ONLY in manual mode
+      const hasMarketplaceAgents = preselectedAgentIds.length > 0 && state.mode === 'manual';
+      if (hasMarketplaceAgents && agents.length > 0) {
+        // Marketplace flow: use the exact agents the user picked
         dispatch({ type: 'DECOMPOSE_SUCCESS', payload: { slots, agents } });
-        // Set auto-selected agents
+        slots.forEach((_, idx) => {
+          preselectedAgentIds
+            .filter(id => agents.some(a => a._id === id))
+            .forEach(agentId => {
+              dispatch({ type: 'SELECT_AGENT', payload: { slotIdx: idx, agentId } });
+            });
+        });
+      } else if (state.mode === 'auto' && agents.length > 0) {
+        // Auto-mode: pre-assign top agents to each slot
+        const sorted = [...agents].sort((a, b) => (b.reliabilityScore || 0) - (a.reliabilityScore || 0));
+        dispatch({ type: 'DECOMPOSE_SUCCESS', payload: { slots, agents } });
         slots.forEach((_, idx) => {
           sorted.slice(0, Math.min(3, sorted.length)).forEach(a => {
             dispatch({ type: 'SELECT_AGENT', payload: { slotIdx: idx, agentId: a._id } });
@@ -194,6 +222,61 @@ export default function ArenaPage() {
             </button>
           </div>
 
+          {/* ── Your Battle Squad — reactive to agent selection changes ── */}
+          {/* Skills: @react-best-practices @ui-ux-pro-max @design-spells */}
+          {state.mode === 'manual' && (() => {
+            // Compute live squad: after decompose use state.selectedAgents, before use marketplaceAgents
+            const CAT_ICONS_MAP = {'classifier':'🏷️','writer':'✍️','ranker':'📊','analyzer':'🔬','linter':'🧹','scanner':'🔍','explainer':'📖','scheduler':'📅','researcher':'🔬'};
+            let squadAgents = [];
+            if (state.phase !== 'idle' && state.agents.length > 0) {
+              // After decompose: show agents actually selected in slots
+              const allSelectedIds = [...new Set(Object.values(state.selectedAgents).flat())];
+              squadAgents = allSelectedIds.map(id => state.agents.find(a => a._id === id)).filter(Boolean);
+            } else {
+              // Before decompose: show agents from marketplace URL
+              squadAgents = marketplaceAgents;
+            }
+            if (squadAgents.length === 0) return null;
+            return (
+              <div className="w-full mb-5 rounded-xl border border-white/[0.06] bg-white/[0.02] p-4 animate-in fade-in duration-300">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-[10px] font-bold tracking-[0.2em] text-white/30 uppercase">🎯 Your Battle Squad</span>
+                  <span className="text-[10px] text-white/20">{squadAgents.length} agents selected</span>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {squadAgents.map(agent => (
+                    <div key={agent._id} className="flex items-center gap-2 px-3 py-1.5 rounded-full border border-white/[0.08] bg-white/[0.03] transition-all hover:border-white/15 group">
+                      <span style={{ fontSize: 14 }}>{CAT_ICONS_MAP[agent.category] || '🤖'}</span>
+                      <span className="text-xs text-white/70 font-medium">{agent.name}</span>
+                      <span className="text-[9px] text-white/20">{Math.round(agent.winRate || 0)}% WR</span>
+                      {/* Remove button — syncs with slot selection below */}
+                      {state.phase !== 'idle' && (
+                        <button
+                          className="ml-1 text-[10px] text-white/20 hover:text-red-400 transition-colors"
+                          onClick={() => {
+                            state.slots.forEach((_, idx) => {
+                              if ((state.selectedAgents[idx] || []).includes(agent._id)) {
+                                dispatch({ type: 'SELECT_AGENT', payload: { slotIdx: idx, agentId: agent._id } });
+                              }
+                            });
+                          }}
+                          title={`Remove ${agent.name}`}
+                        >✕</button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* ── Auto mode + marketplace agents warning ── */}
+          {state.mode === 'auto' && preselectedAgentIds.length > 0 && (
+            <div className="w-full mb-5 rounded-xl border border-amber-500/20 bg-amber-500/[0.05] p-4 text-center animate-in fade-in duration-300">
+              <p className="text-sm text-amber-400">🎯 You have {preselectedAgentIds.length} agents from Marketplace — switch to <strong>Manual</strong> to use them</p>
+            </div>
+          )}
+
           {/* ── Prompt Input ── */}
           <div className="w-full relative">
             <textarea
@@ -235,6 +318,7 @@ export default function ArenaPage() {
               <p className="text-sm text-red-400">{state.error}</p>
             </div>
           )}
+
 
           {/* ── Launch / Decomposing ── */}
           {state.phase === 'idle' && (

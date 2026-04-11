@@ -58,7 +58,9 @@ export async function requestWithAuth(endpoint, options) {
 
   const data = await res.json();
   if (!res.ok) {
-    throw new Error(data.message || 'Something went wrong.');
+    // Handle both AppError format ({message}) and validation format ({errors: [{message}]})
+    const msg = data.message || (data.errors && data.errors[0]?.message) || 'Something went wrong.';
+    throw new Error(msg);
   }
   return data;
 }
@@ -162,4 +164,49 @@ export function startAudition(pipelineId, userInput) {
     },
     body: JSON.stringify({ userInput }),
   });
+}
+
+// ── Results endpoints ── @rest-api-design ───────────────────
+
+export async function getAudition(auditionId) {
+  return requestWithAuth(`/audition/${auditionId}`);
+}
+
+// ── Dashboard endpoints ── @rest-api-design ─────────────────
+
+export async function getMyBattles(page = 1) {
+  return requestWithAuth(`/audition/my?page=${page}&limit=20`);
+}
+
+// ── Marketplace endpoints (public) ── @rest-api-design ──────
+
+export async function searchAgents(query = '', category = 'all', sort = 'reliability', page = 1) {
+  const params = new URLSearchParams({ page, limit: 20, sort });
+  if (query) params.set('q', query);
+  if (category && category !== 'all') params.set('category', category);
+  return request(`/agents/search?${params.toString()}`);
+}
+
+export async function getAgentDetail(agentId) {
+  return request(`/agents/${agentId}`);
+}
+
+export async function getAgentBattles(agentId) {
+  return request(`/audition/agent/${agentId}?limit=5`);
+}
+
+// ── API Keys ── @senior-fullstack @api-patterns ──────────────
+export async function generateApiKey(name, scopes = ['api:read']) {
+  return requestWithAuth('/apikeys', {
+    method: 'POST',
+    body: JSON.stringify({ name, scopes }),
+  });
+}
+
+export async function listApiKeys() {
+  return requestWithAuth('/apikeys');
+}
+
+export async function revokeApiKey(keyId) {
+  return requestWithAuth(`/apikeys/${keyId}`, { method: 'DELETE' });
 }

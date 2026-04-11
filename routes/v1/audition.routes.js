@@ -9,6 +9,8 @@ const {
     run,
     getAudition,
     getAuditionsByPipeline,
+    getUserAuditions,
+    getAgentBattleHistory,
 } = require('../../controllers/auditionController');
 
 const router = express.Router();
@@ -47,6 +49,19 @@ router.post(
     runAuditionValidation,
     validateRequest,
     run
+);
+
+// GET /api/v1/audition/my — user's battle history (MUST be before /:id)
+router.get(
+    '/my',
+    protect(),
+    getUserAuditions
+);
+
+// GET /api/v1/audition/agent/:agentId — public agent battle history
+router.get(
+    '/agent/:agentId',
+    getAgentBattleHistory
 );
 
 // GET /api/v1/audition/pipeline/:pipelineId — all auditions for a pipeline

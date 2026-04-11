@@ -16,13 +16,13 @@ const PROVIDERS = {
     groq: {
         url: 'https://api.groq.com/openai/v1/chat/completions',
         getApiKey: () => config.GROQ_API_KEY,
-        model: 'llama-3.3-70b-versatile',
+        model: 'meta-llama/llama-4-scout-17b-16e-instruct',
         headers: (key) => ({
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${key}`,
         }),
         buildBody: (systemPrompt, userMessage, maxTokens) => ({
-            model: 'llama-3.3-70b-versatile',
+            model: 'meta-llama/llama-4-scout-17b-16e-instruct',
             messages: [
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: userMessage },
@@ -101,21 +101,42 @@ const stripCodeBlocks = (text) => {
 };
 
 /**
- * Safely parse JSON from an AI response. Strips code blocks first.
+ * Safely parse JSON from an AI response. Tries multiple strategies:
+ * 1. Direct parse
+ * 2. Strip code blocks then parse
+ * 3. Extract first JSON object/array via regex
  * Throws AppError with a caller-friendly message on failure.
  */
 const safeParseJSON = (text, context) => {
-    const cleaned = stripCodeBlocks(text);
-    try {
-        return JSON.parse(cleaned);
-    } catch (_err) {
-        logger.error('AI returned invalid JSON', {
-            context,
-            rawLength: text?.length,
-            preview: text?.substring(0, 200),
-        });
-        throw new AppError('AI returned invalid JSON', 502);
+    if (!text || typeof text !== 'string') {
+        throw new AppError('AI returned empty response for JSON parsing', 502);
     }
+
+    // Strategy 1: Direct parse
+    try { return JSON.parse(text.trim()); } catch {}
+
+    // Strategy 2: Strip code blocks
+    const cleaned = stripCodeBlocks(text);
+    try { return JSON.parse(cleaned); } catch {}
+
+    // Strategy 3: Extract first JSON object {...} or array [...]
+    const jsonMatch = text.match(/(\{[\s\S]*\}|\[[\s\S]*\])/);
+    if (jsonMatch) {
+        try { return JSON.parse(jsonMatch[1]); } catch {}
+    }
+
+    // Strategy 4: Try to find JSON between common delimiters
+    const betweenFences = text.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/i);
+    if (betweenFences) {
+        try { return JSON.parse(betweenFences[1].trim()); } catch {}
+    }
+
+    logger.error('AI returned invalid JSON (all strategies failed)', {
+        context,
+        rawLength: text?.length,
+        preview: text?.substring(0, 300),
+    });
+    throw new AppError('AI returned invalid JSON', 502);
 };
 
 // ── Retry helper ─────────────────────────────────────────────
@@ -135,7 +156,8 @@ const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
  * @param {string|null} providerOverride - Force a specific provider (default: null = use config)
  * @returns {string} The AI's response text
  */
-const callAI = async (systemPrompt, userMessage, maxTokens = 2048, providerOverride = null, retried = false) => {
+const callAI = async (systemPrompt, userMessage, maxTokens = 2048, providerOverride = null, retryCount = 0) => {
+    const MAX_RETRIES = 3;
     const providerName = providerOverride || config.AI_PROVIDER;
     const provider = PROVIDERS[providerName];
 
@@ -176,15 +198,15 @@ const callAI = async (systemPrompt, userMessage, maxTokens = 2048, providerOverr
             const errorBody = await response.text();
 
             // ── Auto-retry on 429 rate limit ─────────────────
-            if (response.status === 429 && !retried) {
+            if (response.status === 429 && retryCount < MAX_RETRIES) {
                 const retryAfter = parseFloat(response.headers.get('retry-after')) || 3;
-                const waitMs = Math.min(retryAfter * 1000, 8000);
-                logger.warn('AI rate limited, retrying after delay', {
+                const backoff = Math.min(retryAfter * 1000 * (retryCount + 1), 15000);
+                logger.warn(`AI rate limited, retry ${retryCount + 1}/${MAX_RETRIES} after ${backoff}ms`, {
                     provider: providerName,
-                    waitMs,
+                    backoff,
                 });
-                await sleep(waitMs);
-                return callAI(systemPrompt, userMessage, maxTokens, providerOverride, true);
+                await sleep(backoff);
+                return callAI(systemPrompt, userMessage, maxTokens, providerOverride, retryCount + 1);
             }
 
             logger.error('AI API request failed', {
@@ -289,6 +311,8 @@ Be strict and consistent.`;
 
     const userMessage = `Task: ${task}\n\nOutput to evaluate:\n${output}\n\nRubric: ${rubric}`;
 
+    // Uses default AI_PROVIDER (groq) for all scoring calls.
+    // @performance-optimization — single provider for consistent rate management.
     const text = await callAI(systemPrompt, userMessage, 512);
     const parsed = safeParseJSON(text, 'evaluateOutput');
 
@@ -331,8 +355,9 @@ Be strict and consistent.`;
  * @returns {string} Raw AI response text
  */
 const runAgent = async (systemPrompt, userInput) => {
-    // Uses default provider (Groq). Gemini support ready when key is activated.
-    // callAI has built-in retry for 429 rate limits.
+    // Uses default AI_PROVIDER (groq) for all agent execution.
+    // Groq: 30 req/min free tier with Llama 3.3 70B.
+    // @performance-optimization — stagger delays in auditionService handle rate limits.
     return await callAI(systemPrompt, userInput, 2048);
 };
 

@@ -16,6 +16,7 @@ const {
     getAgentsByCategory,
     updateAgent,
     deleteAgent,
+    searchAgents,
 } = require('../../controllers/agentController');
 
 // ── Rate limiters ────────────────────────────────────────────
@@ -98,8 +99,8 @@ const categoryParamValidation = [
 
 
 // ── Public routes ────────────────────────────────────────────
-// IMPORTANT: /category/:category MUST come BEFORE /:id to avoid
-// Express treating "category" as an :id parameter.
+// IMPORTANT: /search and /category/:category MUST come BEFORE /:id
+router.get('/search', agentReadLimiter, searchAgents);
 router.get('/category/:category', agentReadLimiter, categoryParamValidation, validateRequest, getAgentsByCategory);
 router.get('/:id', agentReadLimiter, getAgent);
 router.get('/', agentReadLimiter, listAgents);

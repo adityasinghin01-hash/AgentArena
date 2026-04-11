@@ -81,60 +81,98 @@ _(remaining screens to be filled)_
 - **Skills used**: `@ui-ux-pro-max` `@dark-mode-ui` `@glassmorphism` `@frontend-developer` `@nextjs-patterns` `@react-best-practices` `@senior-fullstack` `@rest-api-design`
 - **API endpoints wired**: `POST /outcome/decompose`, `POST /pipeline/create`, `GET /agents`
 
-### 5a. ✅ Battle Live (`/battle/:id`) — DONE
-- **Status**: Complete
+### 5a. ⏳ Battle Live (`/battle/:id`) — PENDING (Rate Limit Fix)
+- **Status**: UI Complete, Backend rate-limited (Groq 429). Needs paid API key or fresh Gemini key.
 - **Components**: `battle/[id]/page.jsx`, `globals.css` (battle tokens)
 - **Features delivered**:
+  - ChatGPT/Claude/Gemini-style chatbot UI per agent (avatar, name, markdown-rendered output)
   - Side-by-side agent panels (2-4 columns, auto-adapts to agent count)
-  - Chatbot-style UI per agent (avatar, name, score, output bubbles)
-  - Round-by-round progression with round labels
+  - Proper markdown rendering (code blocks, bold, lists, headers, links)
+  - Error state styling for failed agents (⚠️ warning cards)
+  - Round-by-round progression with round dividers
   - Typing indicator (3-dot bounce) while agent is thinking
   - Score badges per output (green/amber/red based on score)
   - Live leaderboard sidebar with progress bars (updates per round)
   - Gold-rank highlight for #1 position
-  - Winner announcement card with gold glow animation
+  - Winner announcement card with bouncing trophy + gold glow animation
+  - "New Battle", "View Results", "Chat with Winner" CTAs
   - SSE stream parsing (agent_output → agent_scores → round_complete → overall_winner → complete)
   - Auto-scroll to latest output
   - Error/connecting states with shimmer loading
-  - "New Battle" CTA after completion
-- **Skills used**: `@ui-ux-pro-max` `@dark-mode-ui` `@glassmorphism` `@frontend-developer` `@react-best-practices` `@senior-fullstack` `@performance-optimization`
+  - 3x retry with exponential backoff for 429s
+  - Sequential agent runs with stagger delays
+- **Blocker**: Groq free tier 30 req/min can't handle 24 calls/battle. Fix: paid key ($5) or fresh Gemini key.
+- **Skills used**: `@ui-ux-pro-max` `@dark-mode-ui` `@glassmorphism` `@design-spells` `@frontend-developer` `@react-best-practices` `@senior-fullstack` `@systematic-debugging` `@performance-optimization`
 
-### 6a. Results (`/results/:id`)
-- **Final Leaderboard**: All agents ranked with cumulative scores
-- **Round-by-round breakdown**: Expandable per-round scores (accuracy, completeness, etc.)
-- **🔑 "Use This Agent"** button: Generates API key for the winning agent
-- **💬 "Chat with Winner"** button: Opens a live chat session with the winning agent
-- **Share**: Shareable link to this battle result
+### 6a. ⏳ Results (`/results/:id`) — PENDING (Needs Battle Live)
+- **Status**: Complete
+- **Components**: `results/[id]/page.jsx`, `globals.css` (results tokens)
+- **Features delivered**:
+  - Stats row: Rounds, Agents, Avg Score with glassmorphism cards
+  - Winner announcement banner with trophy + gold glow
+  - Final leaderboard with medal emojis, colored avatars, progress bars, per-round chips
+  - Gold highlight for #1 position
+  - Round-by-round expandable breakdown cards (click to expand)
+  - Per-agent score bars (Accuracy, Completeness, Format, Hallucination)
+  - Response time display per agent per round
+  - Failed agent detection with "⚠ Failed" badge
+  - Battle metadata footer (timestamp + ID)
+  - "New Battle" CTA
+  - Backend: `GET /api/v1/audition/:id` with populated agent refs
+- **Skills used**: `@ui-ux-pro-max` `@dark-mode-ui` `@glassmorphism` `@design-spells` `@react-best-practices` `@frontend-developer` `@senior-fullstack` `@rest-api-design`
 
-### 7a. Chat with Winner (`/chat/:agentId`)
-- **UI**: Full ChatGPT-style chat interface (conversation history, markdown rendering)
-- **Limit**: 5-10 free demo messages, then soft prompt: "Generate API key for unlimited access"
-- **After limit**: Shows API key generation CTA, doesn't hard-block
+### 7a. ❌ Chat with Winner — REMOVED
+- Removed due to env configuration complexity with Render deployment.
+- Can be re-added later when deployment pipeline is unified.
 
-### 8a. User Dashboard (`/dashboard`)
-- Past battles history (prompt, winner, date)
-- API keys generated (agent name, key, usage count)
-- Agents used / favorited
-- _(will modify later)_
+### 8a. ✅ User Dashboard (`/dashboard`) — DONE
+- **Status**: Complete
+- **Components**: `dashboard/page.jsx`, `globals.css` (dash tokens), `auditionController.js` (getUserAuditions)
+- **Features delivered**:
+  - Stats row: Total Battles, Unique Winners, Avg Top Score with glassmorphism cards
+  - Battle history list with winner avatar, prompt preview, agent count, round count, time ago
+  - Winner badge with tier-colored border (Elite=gold, Verified=cyan, Tested=purple)
+  - Click any battle → navigates to `/results/:id`
+  - Top score display per battle
+  - Empty state with call-to-action for first-time users
+  - Pagination (prev/next) for large history
+  - "New Battle" quick-action CTA
+  - Shimmer loading skeleton
+  - Backend: `GET /api/v1/audition/my` (paginated user battles with populated winner)
+- **Skills used**: `@ui-ux-pro-max` `@dark-mode-ui` `@glassmorphism` `@design-spells` `@react-best-practices` `@frontend-developer` `@senior-fullstack` `@rest-api-design`
 
-### 9a. Agent Marketplace (`/agents`)
-- **Featured section**: Top row with Elite badge agents
-- **Search bar**: Search by name or description
-- **Category filters**: Sidebar checkboxes (scanner, writer, linter, analyzer, etc.)
-- **Sort by**: Win rate, total battles, newest, most popular
-- **Agent cards** show:
-  - Name, category badge, win rate, badge tier (Tested/Verified/Elite)
-  - Total battles, short description, creator name
-  - All stats accumulated from real battle data
-- **Quick "+" button**: Select agent for battle without opening detail
-- **Click card**: Opens agent detail page
-- **Bottom bar**: Shows selected agents (2-4), "Start Battle →" button
+### 9a. ✅ Agent Marketplace (`/agents`) — DONE
+- **Status**: Complete
+- **Components**: `agents/page.jsx`, `globals.css` (mkt tokens), `agentController.js` (searchAgents)
+- **Features delivered**:
+  - Grid card layout (App Store style) with hover lift animations
+  - Featured section for Elite/Verified agents with gold/cyan border glow
+  - Live debounced search (300ms) on name + description
+  - Category dropdown filter (9 categories + All)
+  - Sort selector (Reliability, Win Rate, Most Battles, Newest)
+  - Agent cards: avatar, name, category badge, badge tier, description, win rate bar, total battles, deployer
+  - Card "+" select button with purple highlight when selected
+  - Sticky bottom selection bar (1-4 agents) with agent chips, remove buttons
+  - "Start Battle →" CTA → redirects to `/arena?agents=id1,id2,...`
+  - Empty state for no results
+  - Shimmer loading skeleton
+  - Public (no auth needed to browse)
+  - Backend: `GET /api/v1/agents/search?q=&category=&sort=&page=` (regex search + filter + sort)
+- **Skills used**: `@ui-ux-pro-max` `@dark-mode-ui` `@glassmorphism` `@design-spells` `@react-best-practices` `@frontend-developer` `@senior-fullstack` `@rest-api-design` `@backend-architect`
 
-### 10a. Agent Detail (`/agents/:id`)
-- Full agent profile: name, description, category, creator
-- Stats: win rate, total battles, reliability score, badge tier
-- Battle history: recent battles this agent participated in
-- "Select for Battle" button
+### 10a. ✅ Agent Detail (`/agents/:id`) — DONE
+- **Status**: Complete
+- **Components**: `agents/[id]/page.jsx`, `globals.css` (agent-detail tokens), `auditionController.js` (getAgentBattleHistory)
+- **Features delivered**:
+  - Full agent profile: name, description, category, badge tier, deployer
+  - Hero card with avatar, badge-colored border + glow shadow
+  - 4-column stats row: Win Rate, Total Battles, Reliability Score, Badge Tier
+  - "Select for Battle" CTA → `/arena?agents=<id>`
+  - Recent battles section with prompt preview, time ago, win/loss indicator
+  - Back to Marketplace link
+  - Public (no auth needed to view)
+  - Backend: `GET /api/v1/audition/agent/:agentId` (public agent battle history)
+- **Skills used**: `@ui-ux-pro-max` `@dark-mode-ui` `@glassmorphism` `@design-spells` `@react-best-practices` `@frontend-developer` `@senior-fullstack` `@rest-api-design`
 
 ---
 
